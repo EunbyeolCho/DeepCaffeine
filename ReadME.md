@@ -27,6 +27,7 @@ Sun: 회의
 * 대략적인 Model 선정 
 * Docker 설치
 
-2주차까지의 TODO: Unet Baseline 코드 짜오기
-
+TODO
+-----
+1주차: Unet Baseline 코드 짜기
 
