@@ -1,4 +1,3 @@
-# DeepCaffeine
 Deep caffeine MBE
 ==================
 
