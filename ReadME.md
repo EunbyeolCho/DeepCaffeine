@@ -4,6 +4,7 @@ Deep caffeine MBE
 Deep caffeine Rule
 ------------------
 Mon: 자연
+
 Tue: 은별
 Wen: 채송
 Thu: 예진
