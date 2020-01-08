@@ -5,6 +5,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+def print_metrics(metrics, epoch_samples, phase):    
+    outputs = []
+    for k in metrics.keys():
+        outputs.append("{}: {:4f}".format(k, metrics[k] / epoch_samples))
+        
+    print("{}: {}".format(phase, ", ".join(outputs))) 
+
 def dice_loss(pred, target, smooth = 1.):
 	pred = pred.contigous()
 	target = target.contigous()
