@@ -6,6 +6,7 @@ import time
 from data_loader.data_loader import get_data_loader
 from models import unet
 import torch.nn as nn
+import copy
 
 
 def trainer(opt, model, optimizer, data_loader, loss_criterion):
@@ -87,8 +88,17 @@ if __name__ == "__main__":
   print('===> Setting Optimizer')
   optimizer = torch.optim.Adam(net.parameters(), lr = opt.lr, betas = (opt.b1, opt.b2))
 
-
+  best_loss = 1.0
+  
   for epoch in range(opt.n_epochs):
     opt.epoch_num = epoch
     train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = L2_criterion)
     # valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = L2_criterion)
+    if valid_loss < best_loss:
+      best_loss = valid_loss
+      best_model_wts = copy.deepcopy(model.state_dict())
+
+model.load_state_dict(best_model_wts)
+return model
+#채송: main 함수 다 돌면 valid loss가 가장 좋은 model 저장하도록
+
