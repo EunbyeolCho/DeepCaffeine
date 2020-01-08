@@ -1,5 +1,5 @@
 #github usuyama/pytorch_unet 참고
-
+#resnet50 based
 
 import torch
 import torch.nn as nn
