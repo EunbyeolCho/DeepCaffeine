@@ -4,7 +4,7 @@ from time import sleep
 from options import args
 import time
 from data_loader.data_loader import get_data_loader
-from model import Unet
+from models import unet
 import torch.nn as nn
 
 
@@ -59,8 +59,9 @@ if __name__ == "__main__":
   log_file = os.path.join(opt.log_dir, '%s_log.csv'%(opt.model))
 
   if opt.model == 'unet' :
-    net = Unet(opt)
-
+    #net = unet(opt)
+    net = unet.UNet(6) #채송: 6은 num_classes! 
+    
   L2_criterion = nn.MSELoss()
   print(net)
 
