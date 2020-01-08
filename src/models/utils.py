@@ -48,5 +48,5 @@ def plot_errors(results_dict, title):
 	
 '''
 def masks_to_colorimg(masks): ...
-
+#채송: 어차피 우리 이미지가 x-ray다 보니 이 함수는 아예 참고 안했습니다. 사실 plot도 필요없긴 한데.. .. 혹시 모르니 일단은 추가해놓음
 '''
