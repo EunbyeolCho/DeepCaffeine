@@ -94,11 +94,13 @@ if __name__ == "__main__":
     opt.epoch_num = epoch
     train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = L2_criterion)
     # valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = L2_criterion)
-    if valid_loss < best_loss:
-      best_loss = valid_loss
-      best_model_wts = copy.deepcopy(model.state_dict())
-
-model.load_state_dict(best_model_wts)
-return model
-#채송: main 함수 다 돌면 valid loss가 가장 좋은 model 저장하도록
+    if not opt.save_best:
+      save_checkpoint(opt, net, epoch, valid_loss) #채송: 여기서 net을 인자로 주는게 맞을까..? 이부분이 너무 헷갈려
+      
+    if opt.save_best:
+      if valid_loss < best_loss: 
+        best_loss = valid_loss
+        best_model_wts = copy.deepcopy(model.state_dict())
+      save_checkpoint(opt, best_model_wts, epoch, valid_loss)
+#채송: main 함수 다 돌면 valid loss가 가장 좋은 model 저장하도록 하는 
 
