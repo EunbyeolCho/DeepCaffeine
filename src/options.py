@@ -25,8 +25,8 @@ parser.add_argument('--weight_dir', type = str, default = weight_dir)
 
 parser.add_argument('--use_cuda', type = bool, default = True)
 parser.add_argument('--device', type = str, default = 'cpu',
-                    help = 'cpu', 'cuda')
-parser.add_argument('--seed', type = int, default = 1
+                    help = 'cpu, cuda')
+parser.add_argument('--seed', type = int, default = 1,
                     help = 'random seed 고정 위해서 넣음')
 parser.add_argument('--multi-gpu', type = bool, default = True)
 
@@ -34,7 +34,7 @@ parser.add_argument('--multi-gpu', type = bool, default = True)
 parser.add_argument('--mode', type = str, default = 'train',
                     help = 'train, valid, test')
 parser.add_argument('--model', type = str, default = 'unet',
-                    help = 'unet' 'maskRcnn', 'deeplabv3p')
+                    help = 'unet, maskRcnn, deeplabv3p')
 parser.add_argument('--n_epochs', type = int, default = 500,
                     help = 'max epochs')
 parser.add_argument('--epoch_num', type = int, default = 0,

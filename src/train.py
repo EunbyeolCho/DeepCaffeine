@@ -1,5 +1,9 @@
 import os
-import tensorflow as tf
+#예진:tensorflow 필요없어 주석처리, import torch, random, tnesorboardX
+#import tensorflow as tf
+import torch
+import random
+from tensorboardX import SummaryWriter 
 from time import sleep
 from options import args
 import time
@@ -10,6 +14,7 @@ import copy
 
 
 def trainer(opt, model, optimizer, data_loader, loss_criterion):
+
   print('====Training====')
   
   start_time = time.time()
@@ -54,7 +59,7 @@ if __name__ == "__main__":
 
   train_data_loader, valid_data_loader = get_data_loader(opt)
   
-  if not os.path.exists(opt.log_dir)
+  if not os.path.exists(opt.log_dir) :
     os.makedirs(opt.log_dir)
 
   log_file = os.path.join(opt.log_dir, '%s_log.csv'%(opt.model))

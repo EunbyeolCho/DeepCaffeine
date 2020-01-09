@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:1.14.0-gpu-py3
+FROM pytorch/pytorch:1.2-cuda10.0-cudnn7-runtime
 
 ENV SRC_DIR /src
 

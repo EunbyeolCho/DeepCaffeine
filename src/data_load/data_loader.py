@@ -75,31 +75,47 @@ class DatasetFromFolder(data.Dataset):
         super(DatasetFromFolder, self).__init__()
 
         #ex) img_list = [1000000, 1000001,1000002,1000003,1000006,1000010,...]
-        self.img_list = os.listdir(opt.train_dir)
+        #예진: mode 사용하여 img_list를 train과 test하는 경우로 분리
+        if opt.mode == 'train':
+            self.img_list = os.listdir(opt.train_dir)
+        else: #test
+            self.img_list = os.listdir(opt.test_dir)
+
         self.train_dir = opt.train_dir
         self.test_dir = opt.test_dir
 
 
     def __getitem__(self, idx):
 
-        #ex) img_list_path = '/data/train/1000000'
-        img_list_path = os.path.join(train_dir, self.img_list[idx])
-        #ex) img_files = ['100000.dcm','100000_AorticKnob.png','100000_Carina.png', ...] -> 1개의 dcm + 8개 mask
-        img_files = os.listdir(img_list_path)
+        #예진: train/test 분리
+        if opt.mode == 'train':
+            #ex) img_list_path = '/data/train/1000000'
+            img_list_path = os.path.join(train_dir, self.img_list[idx])
+            #ex) img_files = ['100000.dcm','100000_AorticKnob.png','100000_Carina.png', ...] -> 1개의 dcm + 8개 mask
+            img_files = os.listdir(img_list_path)
 
-        masks = np.array([])
+            masks = np.array([])
+            
+            for img in img_files : 
+                if '.dcm' in img : 
+                    #input_img : 0-1 histogram equalization 한 후 
+                    input_img = dicom2png(os.path.join(img_list_path, img))
+                    W , H = input_img.shape
+                else : #.png
+                    mask = cv2.imread(os.path.join(img_list_path, img))
+                    masks = np.append(masks, mask)
+
+            masks = masks.reshape(8, W, H )
         
-        for img in img_files : 
-            if '.dcm' in img : 
-                #input_img : 0-1 histogram equalization 한 후 
-                input_img = dicom2png(os.path.join(img_list_path, img))
-                W , H = input_img.shape
-            else : #.png
-                mask = cv2.imread(os.path.join(img_list_path, img))
-                masks = np.append(masks, mask)
+        else: #test
+            img_list_path = os.path.join(test_dir, self.img_list[idx])
+            for img in img_list_path : 
+                if '.dcm' in img : 
+                    #input_img : 0-1 histogram equalization 한 후 
+                    input_img = dicom2png(os.path.join(img_list_path, img))
+                    W , H = input_img.shape
 
-        masks = masks.reshape(8, W, H )
-
+            masks = np.array([])
 
         return input_img, masks, img_list_path
 
@@ -128,17 +144,15 @@ def get_data_loader(opt):
     return train_data_loader, valid_data_loader
 
 
-#valid 생성 안할 때 train_data_loader
-"""
-def get_data_loader(opt):
+#자연: valid 생성 안할 때 train_data_loader
+#예진: test_data_loader로 사용
+
+def get_test_data_loader(opt):
     
     dataset = DatasetFromFolder(opt)
 
-    train_data_loader = DataLoader(dataset = dataset, 
+    test_data_loader = DataLoader(dataset = dataset, 
                                     batch_size = opt.batch_size,
                                     shuffle = True)
 
-
-    return train_data_loader
-
-"""
+    return test_data_loader
