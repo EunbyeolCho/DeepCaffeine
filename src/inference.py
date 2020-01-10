@@ -54,8 +54,12 @@ def inference(opt):
         img = img.to(opt.device, dtype = torch.float)
         masks = masks.to(opt.device, dtype = torch.float)
 
-      out = net(img) #예진:unet의 out은 어떤 형식?
-
+      #out = net(img) #예진:unet의 out은 어떤 형식?
+      #채송: unet out이 모델인거같아!
+      
+      
+      
+      model = pytorch_unet.UNet(num_class).to(device)
       #target과 비교하여 평가지표 구하기 -- traget 어디에?
 
 
