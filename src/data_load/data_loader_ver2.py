@@ -7,6 +7,8 @@ import torch.utils.data as data
 from torchvision.transforms import Compose, ToTensor, Resize, Normalize, RandomHorizontalFlip, TenCrop
 from torch.utils.data import DataLoader
 #need to add center crop!!
+# 은별 : 요거 누가 쓴거지? center crop 추가하기는 했는데 사이즈가 애매하군
+# 은별 : 흠 ... tencrop추가할까? 일단은 center crop해놨어용
 
 #자연 : flip 좋은 생각 아닌거 같아, 우리가 detect하는것이 오른쪽/왼쪽이 정해져 있어서 편파적으로 학습하게 두는게 더 좋을것같은데 어때?
 #은별 : 직관적으로 무슨 뜻인지 알겠는데, flip하는 일이 어려운일이 아니니까 직접해보고 결과를 비교하는게 가장 확실할 것 같아!
@@ -69,6 +71,38 @@ def dicom2png(dcm_pth):
 
     return nor_dc_arr
 
+def mask_transform(opt):
+    if opt.augmentation:
+        compose = Compose([
+            transforms.Scale(opt.img_size),
+            transforms.CenterCrop(224),
+            #RandomHorizontalFlip(),
+            transforms.ToTensor(),
+        ])
+    else:
+        compose = Compose([
+            transforms.Scale(opt.img_size),
+            transforms.ToTensor()
+        ])
+
+    return compose
+
+def img_transform(opt):
+    if opt.augmentation:
+        compose = Compose([
+            transforms.Scale(opt.img_size),
+            transforms.CenterCrop(224),
+            #RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406],[0.229, 0.224, 0.225])
+        ])
+    else:
+        compose = Compose([
+            transforms.Scale(opt.img_size),
+            transforms.ToTensor()
+        ])
+        
+    return compose
 
 
 class DatasetFromFolder(data.Dataset):
@@ -107,6 +141,10 @@ class DatasetFromFolder(data.Dataset):
                     masks = np.append(masks, mask)
 
             masks = masks.reshape(8, W, H )
+            
+            # train dataset 에만 transform 반영
+            input_img = self.img_transform(input_img)
+            masks = self.mask_transform(masks)
         
         else: #test
             img_list_path = os.path.join(self.test_dir, self.img_list[idx])

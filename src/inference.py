@@ -67,7 +67,7 @@ def inference(opt):
       _, mask = cv2.threshold(np.asarray(mask, dtype=unit8), 0, 1, cv2.THRESH_BINARY)
       cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name+'.png'), mask)
 
-      #파일이름과 평과지표 프린트
+      #파일이름과 평가지표 프린트
 
 
 if __name__ == "__main__":

@@ -45,6 +45,13 @@ parser.add_argument('--b1', type = float, default = 0.9,
                     help = 'Adam : decay of first order momentum of gradient')
 parser.add_argument('--b2', type = float, default = 0.999,
                     help = 'Adam : decay of second order momentum of gradient')
+
+# data loader argument
+parser.add_argument('--img_size', type = int, default = None,
+                    help = 'In this case, img size means scale size')
+parser.add_argument('--augmentation', type = bool, default = False,
+                    help = 'augmentation (centercrop, scale)augmentation fro training set')
+
 #채송: save_best 추가
 parser.add_argument('--save_best', type = bool, default = False, help = 'you can save only the best model')
 parser.add_argument('--train_ratio', type =float, default = 0.8,

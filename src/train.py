@@ -101,6 +101,7 @@ if __name__ == "__main__":
     # valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = L2_criterion)
     if not opt.save_best:
       save_checkpoint(opt, net, epoch, valid_loss) #채송: 여기서 net을 인자로 주는게 맞을까..? 이부분이 너무 헷갈려
+      # 은별 :net을 인자로 주는 거 맞는것같아
       
     if opt.save_best:
       if valid_loss < best_loss: 
