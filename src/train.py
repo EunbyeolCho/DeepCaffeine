@@ -18,7 +18,7 @@ def trainer(opt, model, optimizer, data_loader, loss_criterion):
   print('====Training====')
   
   start_time = time.time()
-
+  
   total_loss = 0.0
   
   for i, batch in enumerate(data_loader) :

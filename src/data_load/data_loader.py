@@ -156,7 +156,7 @@ class DatasetFromFolder(data.Dataset):
             if '.dcm' in img : 
                 #input_img : 0-1 histogram equalization 한 후 
                 input_img = dicom2png(os.path.join(img_list_path, img))
-
+                input_img = self.img_transform(input_img)
             masks = np.array([])
 
         return input_img, masks, img_list_path
@@ -195,6 +195,6 @@ def get_test_data_loader(opt):
 
     test_data_loader = DataLoader(dataset = dataset, 
                                     batch_size = opt.batch_size,
-                                    shuffle = True)
+                                    shuffle = False)
 
     return test_data_loader
