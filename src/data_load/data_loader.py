@@ -6,6 +6,10 @@ import torch
 import torch.utils.data as data
 from torchvision.transforms import Compose, ToTensor, Resize, Normalize, RandomHorizontalFlip, TenCrop
 from torch.utils.data import DataLoader
+from torchvision.transforms import transforms
+# import sys
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../options')))
+# from options import args
 #need to add center crop!!
 # 은별 : 요거 누가 쓴거지? center crop 추가하기는 했는데 사이즈가 애매하군
 # 은별 : 흠 ... tencrop추가할까? 일단은 center crop해놨어용
@@ -71,17 +75,29 @@ def dicom2png(dcm_pth):
 
     return nor_dc_arr
 
+
+
+def fake_dcm2png(pth):
+
+    img = cv2.imread(pth, cv2.IMREAD_GRAYSCALE)
+    img = img.reshape(1,400,400)
+
+    return img
+
+
+
+
 def mask_transform(opt):
     if opt.augmentation:
         compose = Compose([
-            transforms.Scale(opt.img_size),
+            # transforms.Scale(opt.img_size),
             transforms.CenterCrop(224),
             #RandomHorizontalFlip(),
             # transforms.ToTensor(),
         ])
     else:
         compose = Compose([
-            transforms.Scale(opt.img_size),
+            # transforms.Scale(opt.img_size),
             # transforms.ToTensor()
         ])
 
@@ -90,7 +106,7 @@ def mask_transform(opt):
 def img_transform(opt):
     if opt.augmentation:
         compose = Compose([
-            transforms.Scale(opt.img_size),
+            # transforms.Scale(opt.img_size),
             transforms.CenterCrop(224),
             #RandomHorizontalFlip(),
             # transforms.ToTensor(),
@@ -102,7 +118,7 @@ def img_transform(opt):
         ])
     else:
         compose = Compose([
-            transforms.Scale(opt.img_size),
+            # transforms.Scale(opt.img_size),
             # transforms.ToTensor()
         ])
         
@@ -123,12 +139,14 @@ class DatasetFromFolder(data.Dataset):
 
         self.train_dir = opt.train_dir
         self.test_dir = opt.test_dir
-
+        self.opt = opt
+        self.img_transform = img_transform(opt)
+        self.mask_transform = mask_transform(opt)
 
     def __getitem__(self, idx):
 
         #예진: train/test 분리
-        if opt.mode == 'train':
+        if self.opt.mode == 'train':
             #ex) img_list_path = '/data/train/1000000'
             img_list_path = os.path.join(self.train_dir, self.img_list[idx])
             #ex) img_files = ['100000.dcm','100000_AorticKnob.png','100000_Carina.png', ...] -> 1개의 dcm + 8개 mask
@@ -137,15 +155,18 @@ class DatasetFromFolder(data.Dataset):
             masks = np.array([])
             
             for img in img_files : 
-                if '.dcm' in img : 
+                print('\n\n',img)
+                if '.jpg' in img : 
                     #input_img : 0-1 histogram equalization 한 후 
-                    input_img = dicom2png(os.path.join(img_list_path, img))
-                    W , H = input_img.shape
+                    # input_img = dicom2png(os.path.join(img_list_path, img))
+                    input_img = fake_dcm2png(os.path.join(img_list_path, img))
+                    c, W , H = input_img.shape
                 else : #.png
-                    mask = cv2.imread(os.path.join(img_list_path, img))
+                    # mask = cv2.imread(os.path.join(img_list_path, img))
+                    mask = fake_dcm2png(os.path.join(img_list_path,img))
                     masks = np.append(masks, mask)
 
-            masks = masks.reshape(8, W, H )
+            masks = masks.reshape(2, W, H )
             
             # train dataset 에만 transform 반영
             input_img = self.img_transform(input_img)
@@ -153,9 +174,10 @@ class DatasetFromFolder(data.Dataset):
         
         else: #test
             img_list_path = os.path.join(self.test_dir, self.img_list[idx])
-            if '.dcm' in img : 
+            if '.jpg' in img_list_path : 
                 #input_img : 0-1 histogram equalization 한 후 
-                input_img = dicom2png(os.path.join(img_list_path, img))
+                # input_img = dicom2png(os.path.join(img_list_path, img))
+                input_img = fake_dcm2png(img_list_path)
                 input_img = self.img_transform(input_img)
             masks = np.array([])
 

@@ -3,7 +3,7 @@ import os
 import glob
 import torch
 
-def load_model(checkpoint_dir):
+def load_model(opt, checkpoint_dir):
     checkpoint_list = glob.glob(os.path.join(checkpoint_dir, "*.pth"))
     checkpoint_list.sort()
 
@@ -15,7 +15,7 @@ def load_model(checkpoint_dir):
     checkpoint_path = checkpoint_list[best_loss_idx]
 
     if opt.model == 'unet' :
-        net = unet.UNet(6) #채송: 6은 num_classes! 
+        net = unet.UNet(opt.num_class) #채송: 6은 num_class! 
 
     if os.path.isfile(checkpoint_path):
         print("=> loading checkpoint '{}'".format(checkpoint_path))

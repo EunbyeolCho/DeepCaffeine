@@ -2,15 +2,29 @@ import argparse
 import os
 import torch
 
-ID = os.environ['ID']
-ID = str(ID)
+# ID = os.environ['ID']
+# ID = str(ID)
 
-train_dir = '/data/train'
-log_dir = '/data/volume/logs'
-test_dir = '/data/test'
-output_dir = '/data/output'
-volume_dir = '/data/volume'
-weight_dir = '/data/volume/logs' + ID + '_final.hdf5'
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), './data')))
+
+
+pwd = os.getcwd()
+src_dir = os.path.join(pwd, 'src')
+data_dir = os.path.join(src_dir, 'data')
+train_dir = os.path.join(data_dir, 'train')
+test_dir = os.path.join(data_dir, 'test')
+volume_dir = os.path.join(data_dir, 'volume')
+output_dir = os.path.join(data_dir, 'output')
+log_dir = os.path.join(volume_dir, 'logs')
+
+
+# test_dir = '/data/train'
+# log_dir = '/data/volume/logs'
+# test_dir = '/data/test'
+# output_dir = '/data/output'
+# volume_dir = '/data/volume'
+# weight_dir = '/data/volume/logs' + ID + '_final.hdf5'
 
 
 parser = argparse.ArgumentParser(description = 'HeLP Challenge 2019 Cardiovascular')
@@ -20,7 +34,7 @@ parser.add_argument('--log_dir', type = str, default = log_dir)
 parser.add_argument('--test_dir', type = str, default = test_dir)
 parser.add_argument('--output_dir', type = str, default = output_dir)
 parser.add_argument('--volume_dir', type = str, default = volume_dir)
-parser.add_argument('--weight_dir', type = str, default = weight_dir)
+# parser.add_argument('--weight_dir', type = str, default = weight_dir)
 
 
 parser.add_argument('--use_cuda', type = bool, default = True)
@@ -51,6 +65,7 @@ parser.add_argument('--img_size', type = int, default = None,
                     help = 'In this case, img size means scale size')
 parser.add_argument('--augmentation', type = bool, default = False,
                     help = 'augmentation (centercrop, scale)augmentation fro training set')
+parser.add_argument('--num_class', type = int, default = 8)
 
 #채송: save_best 추가
 parser.add_argument('--save_best', type = bool, default = False, help = 'you can save only the best model')

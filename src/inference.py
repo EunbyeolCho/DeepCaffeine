@@ -3,14 +3,22 @@ import torch
 from options import args
 import glob
 import torch.nn as nn
-from data_loader.data_loader import get_test_data_loader
+from data_load.data_loader import get_test_data_loader
 from models.unet import UNet
+from utils.load_model import load_model
+import time
+import cv2
+import numpy as np
 
 '''
 #예진
 의학영상처리 srcnn.py의 test_model 참고
 미완성: 1)네트워크에서 나온 결과를 mask로 저장 2)traget과 비교하여 평가지표 구하는 부분 
 '''
+
+def class_name(num):
+  cn = ['Aortic Knob', 'Carina', 'DAO', 'LAA', 'Lt Lower CB', 'Pulmonary Conus', 'Rt Lower CB', 'Rt Upper CB']
+  return cn[num]
 
 def inference(opt):
   print()
@@ -21,14 +29,14 @@ def inference(opt):
   
   #load test data
   test_data_loader = get_test_data_loader(opt)
-  print("test_dir is : {}".format(test_dir))
+  print("test_dir is : {}".format(opt.test_dir))
   
   #output_dir 확인
   if not os.path.exists(opt.output_dir) :
     os.makedirs(opt.output_dir)
   
   #/data/volume에서 저장된 model 중 best model load
-  _, net = load_model(opt.checkpoint_dir)
+  _, net = load_model(opt, opt.volume_dir)
   L2_criterion = nn.MSELoss()
   
   if torch.cuda.device_count() > 1 and opt.multi_gpu : 
@@ -47,7 +55,7 @@ def inference(opt):
     sum_loss = 0
     avg_loss = 0
     
-    for i, batch in test_data_loader :
+    for i, batch in enumerate(test_data_loader) :
       
       img, masks, filepath = batch[0], batch[1], batch[2]
 
@@ -59,21 +67,34 @@ def inference(opt):
       #채송: unet의 반환값 형식을 말하는거야??
       #out이 어디서 쓰이는 애야..???
       
-      model = pytorch_unet.UNet(num_class).to(device)
+      #model = pytorch_unet.UNet(num_class).to(device)
       #target과 비교하여 평가지표 구하기 -- traget 어디에?
 
+      print("*****************************************")
+      print(filepath)
 
-      #결과를 /data/ouput에 저장
-      maskDir_case = os.path.join(maskDir, case_id)
-      _, mask = cv2.threshold(np.asarray(mask, dtype=unit8), 0, 1, cv2.THRESH_BINARY)
-      cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name+'.png'), mask)
+      maskDir = opt.output_dir
 
-      #파일이름과 평가지표 프린트
+      for b in range(opt.batch_size):
+        #결과를 /data/ouput에 저장
+        case_id = os.path.basename(filepath[b])[:-4]
+
+        print(case_id)
+
+        for j in range(opt.num_class):
+          maskDir_case = os.path.join(maskDir, case_id)
+          if not os.path.exists(maskDir_case) :
+            os.makedirs(maskDir_case)
+          mask = out[b, j, :, :]
+          _, mask = cv2.threshold(np.asarray(mask, dtype='uint8'), 0, 1, cv2.THRESH_BINARY)
+          cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name(j)+'.png'), mask)
 
 
 if __name__ == "__main__":
   opt = args
   print(opt)
-
-  if opt.mode is 'test' : 
+  print(opt.mode)
+  
+  if opt.mode == 'test' : 
+    print('im here')
     inference(opt)
