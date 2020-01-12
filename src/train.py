@@ -63,14 +63,14 @@ if __name__ == "__main__":
     os.makedirs(opt.log_dir)
 
   log_file = os.path.join(opt.log_dir, '%s_log.csv'%(opt.model))
-
+  
   if opt.model == 'unet' :
     #net = unet(opt)
     net = unet.UNet(6) #채송: 6은 num_classes! 
     
   L2_criterion = nn.MSELoss()
   print(net)
-
+  
   
   print('===> Setting GPU')
   print("CUDA Available", torch.cuda.is_available())
@@ -106,7 +106,9 @@ if __name__ == "__main__":
     if opt.save_best:
       if valid_loss < best_loss: 
         best_loss = valid_loss
-        best_model_wts = copy.deepcopy(model.state_dict())
-      save_checkpoint(opt, best_model_wts, epoch, valid_loss)
+        best_model_wts = copy.deepcopy(net.state_dict())
 #채송: main 함수 다 돌면 valid loss가 가장 좋은 model 저장하도록 하는 
+
+  if opt.save_best:
+    save_checkpoint(opt, best_model_wts, epoch, valid_loss)
 

@@ -4,6 +4,7 @@ from options import args
 import glob
 import torch.nn as nn
 from data_loader.data_loader import get_test_data_loader
+from models.unet import UNet
 
 '''
 #예진
@@ -21,19 +22,19 @@ def inference(opt):
   #load test data
   test_data_loader = get_test_data_loader(opt)
   print("test_dir is : {}".format(test_dir))
-
+  
   #output_dir 확인
   if not os.path.exists(opt.output_dir) :
     os.makedirs(opt.output_dir)
-
+  
   #/data/volume에서 저장된 model 중 best model load
   _, net = load_model(opt.checkpoint_dir)
   L2_criterion = nn.MSELoss()
-
+  
   if torch.cuda.device_count() > 1 and opt.multi_gpu : 
       print("Use" + str(torch.cuda.device_count()) + 'GPUs')
       net = nn.DataParallel(net)
-
+  
   if opt.use_cuda :
       net = net.to(opt.device)
       L2_criterion = L2_criterion.to(opt.device)
