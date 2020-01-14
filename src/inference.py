@@ -96,5 +96,4 @@ if __name__ == "__main__":
   print(opt.mode)
   
   if opt.mode == 'test' : 
-    print('im here')
     inference(opt)

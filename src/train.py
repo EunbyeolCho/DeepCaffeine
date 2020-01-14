@@ -23,8 +23,10 @@ def trainer(opt, model, optimizer, data_loader, loss_criterion):
   total_loss = 0.0
   
   for i, batch in enumerate(data_loader) :
-    
+    print(i)
     img, masks = batch[0], batch[1]
+    print(img.shape)
+    print(masks.shape)
 
     if opt.use_cuda :
       img = img.to(opt.device, dtype = torch.float)

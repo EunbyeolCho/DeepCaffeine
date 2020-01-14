@@ -18,7 +18,7 @@ def load_model(opt, checkpoint_dir):
         net = unet.UNet(opt.num_class) #채송: 6은 num_class! 
 
     if os.path.isfile(checkpoint_path):
-        print("=> loading checkpoint '{}'".format(checkpoint_path))
+        # print("=> loading checkpoint '{}'".format(checkpoint_path))
         checkpoint = torch.load(checkpoint_path)
         
         n_epoch = checkpoint['epoch']

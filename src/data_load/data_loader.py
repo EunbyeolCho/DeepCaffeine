@@ -155,7 +155,7 @@ class DatasetFromFolder(data.Dataset):
             masks = np.array([])
             
             for img in img_files : 
-                print('\n\n',img)
+                # print('\n\n',img)
                 if '.jpg' in img : 
                     #input_img : 0-1 histogram equalization 한 후 
                     # input_img = dicom2png(os.path.join(img_list_path, img))
@@ -166,7 +166,7 @@ class DatasetFromFolder(data.Dataset):
                     mask = fake_dcm2png(os.path.join(img_list_path,img))
                     masks = np.append(masks, mask)
 
-            masks = masks.reshape(2, W, H )
+            masks = masks.reshape(self.opt.num_class, W, H )
             
             # train dataset 에만 transform 반영
             input_img = self.img_transform(input_img)
