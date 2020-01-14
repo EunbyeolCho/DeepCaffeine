@@ -8,6 +8,7 @@ from time import sleep
 from options import args
 import time
 from data_load.data_loader import get_data_loader
+from data_load.data_loader import normalize
 from models import unet
 import torch.nn as nn
 import copy
@@ -23,10 +24,7 @@ def trainer(opt, model, optimizer, data_loader, loss_criterion):
   total_loss = 0.0
   
   for i, batch in enumerate(data_loader) :
-    print(i)
     img, masks = batch[0], batch[1]
-    print(img.shape)
-    print(masks.shape)
 
     if opt.use_cuda :
       img = img.to(opt.device, dtype = torch.float)
@@ -34,6 +32,9 @@ def trainer(opt, model, optimizer, data_loader, loss_criterion):
       optimizer.zero_grad()
 
     out = model(img)
+
+    #to use bce loss
+    out = normalize(out)
 
     loss = loss_criterion(out, masks)
     loss.backward()
@@ -68,6 +69,9 @@ def evaluator(opt, model, data_loader, loss_criterion):
 
       out = model(img)
 
+      #to use bce loss
+      out = normalize(out)
+
       loss = loss_criterion(out, masks)
 
       total_loss +=loss.item()
@@ -96,7 +100,8 @@ if __name__ == "__main__":
     #net = unet(opt)
     net = unet.UNet(opt.num_class) #채송: 6은 num_class! 
     
-  L2_criterion = nn.MSELoss()
+  # loss_criterion = nn.MSELoss()
+  loss_criterion = nn.BCELoss()
   print(net)
   
   
@@ -116,7 +121,7 @@ if __name__ == "__main__":
 
   if opt.use_cuda :
       net = net.to(opt.device)
-      L2_criterion = L2_criterion.to(opt.device)
+      loss_criterion = loss_criterion.to(opt.device)
   
   print('===> Setting Optimizer')
   optimizer = torch.optim.Adam(net.parameters(), lr = opt.lr, betas = (opt.b1, opt.b2))
@@ -125,8 +130,8 @@ if __name__ == "__main__":
   
   for epoch in range(opt.n_epochs):
     opt.epoch_num = epoch
-    train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = L2_criterion)
-    valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = L2_criterion)
+    train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = loss_criterion)
+    valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = loss_criterion)
     if not opt.save_best:
       save_checkpoint(opt, net, epoch, valid_loss) #채송: 여기서 net을 인자로 주는게 맞을까..? 이부분이 너무 헷갈려
       # 은별 :net을 인자로 주는 거 맞는것같아

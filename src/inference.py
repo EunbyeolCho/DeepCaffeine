@@ -4,6 +4,7 @@ from options import args
 import glob
 import torch.nn as nn
 from data_load.data_loader import get_test_data_loader
+from data_load.data_loader import normalize
 from models.unet import UNet
 from utils.load_model import load_model
 import time
@@ -37,7 +38,7 @@ def inference(opt):
   
   #/data/volume에서 저장된 model 중 best model load
   _, net = load_model(opt, opt.volume_dir)
-  L2_criterion = nn.MSELoss()
+  loss_criterion = nn.MSELoss()
   
   if torch.cuda.device_count() > 1 and opt.multi_gpu : 
       print("Use" + str(torch.cuda.device_count()) + 'GPUs')
@@ -45,7 +46,7 @@ def inference(opt):
   
   if opt.use_cuda :
       net = net.to(opt.device)
-      L2_criterion = L2_criterion.to(opt.device)
+      loss_criterion = loss_criterion.to(opt.device)
   
   #test하기
   with torch.no_grad():
@@ -67,8 +68,9 @@ def inference(opt):
       #채송: unet의 반환값 형식을 말하는거야??
       #out이 어디서 쓰이는 애야..???
       
-      #model = pytorch_unet.UNet(num_class).to(device)
-      #target과 비교하여 평가지표 구하기 -- traget 어디에?
+      #자연 : 보기 쉽게 0-255로 바꾸려구 추가함
+      out = normalize(out)
+      out = out*255
 
       print("*****************************************")
       print(filepath)
@@ -83,10 +85,14 @@ def inference(opt):
 
         for j in range(opt.num_class):
           maskDir_case = os.path.join(maskDir, case_id)
+
           if not os.path.exists(maskDir_case) :
             os.makedirs(maskDir_case)
+
           mask = out[b, j, :, :]
-          _, mask = cv2.threshold(np.asarray(mask, dtype='uint8'), 0, 1, cv2.THRESH_BINARY)
+          #자연 : 픽셀값 확인하려고 threshold 지움 + *255 함
+          # _, mask = cv2.threshold(np.asarray(mask, dtype='uint8'), 0, 1, cv2.THRESH_BINARY)
+          mask = np.array(mask)
           cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name(j)+'.png'), mask)
 
 

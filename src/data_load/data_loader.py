@@ -65,9 +65,10 @@ def dicom2png(dcm_pth):
     #자연 : create a CLAHE(Contrast Limited Adaptive Histogram Equalization)
     clahe = cv2.create(clipLimit = 2.0, tileGridSize = (8,8))
     nor_dc_arr = clahe.apply(dc_arr)
+    nor_dc_arr = np.array(nor_dc_arr, dtype = np.float8)
 
-    #자연 : type error날것같은데 안돌려봄
-    nor_dc_arr = np.array(nor_dc_arr/255.0, dtype = np.float8)
+    #자연 : type error날것같은데 안돌려봄, noramlize def 쓸거면 안써도 됨.
+    # nor_dc_arr = np.array(nor_dc_arr/255.0, dtype = np.float8)
     
     #자연 : dcm있는 자리에 png로저장
     # png_pth = dcm_pth.replace('.dcm', '.png')
@@ -84,7 +85,13 @@ def fake_dcm2png(pth):
 
     return img
 
+def normalize(img):
+    
+    max = img.max()
+    min = img.min()
+    img = (img-min)/(max-min)
 
+    return img
 
 
 def mask_transform(opt):
@@ -160,10 +167,13 @@ class DatasetFromFolder(data.Dataset):
                     #input_img : 0-1 histogram equalization 한 후 
                     # input_img = dicom2png(os.path.join(img_list_path, img))
                     input_img = fake_dcm2png(os.path.join(img_list_path, img))
+                    #자연 : bce때문에 normaliz 추가함 
+                    input_img = normalize(input_img)
                     c, W , H = input_img.shape
                 else : #.png
                     # mask = cv2.imread(os.path.join(img_list_path, img))
                     mask = fake_dcm2png(os.path.join(img_list_path,img))
+                    mask = normalize(mask)
                     masks = np.append(masks, mask)
 
             masks = masks.reshape(self.opt.num_class, W, H )
@@ -179,6 +189,8 @@ class DatasetFromFolder(data.Dataset):
                 # input_img = dicom2png(os.path.join(img_list_path, img))
                 input_img = fake_dcm2png(img_list_path)
                 input_img = self.img_transform(input_img)
+                input_img = normalize(input_img)
+
             masks = np.array([])
 
         return input_img, masks, img_list_path
