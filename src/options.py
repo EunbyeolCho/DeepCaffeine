@@ -46,7 +46,7 @@ parser.add_argument('--multi-gpu', type = bool, default = True)
 
 
 parser.add_argument('--mode', type = str, default = 'train',
-                    help = 'train, valid, test')
+                    help = 'train, test')
 parser.add_argument('--model', type = str, default = 'unet',
                     help = 'unet, maskRcnn, deeplabv3p')
 parser.add_argument('--n_epochs', type = int, default = 500,

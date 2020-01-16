@@ -7,6 +7,7 @@ from data_load.data_loader import get_test_data_loader
 from data_load.data_loader import normalize
 from models.unet import UNet
 from utils.load_model import load_model
+from utils.one_hot import one_hot
 import time
 import cv2
 import numpy as np
@@ -30,6 +31,7 @@ def inference(opt):
   
   #load test data
   test_data_loader = get_test_data_loader(opt)
+
   print("test_dir is : {}".format(opt.test_dir))
   
   #output_dir 확인
@@ -70,7 +72,7 @@ def inference(opt):
       
       #자연 : 보기 쉽게 0-255로 바꾸려구 추가함
       out = normalize(out)
-      out = out*255
+      # out = out*255
 
       print("*****************************************")
       print(filepath)
@@ -80,7 +82,8 @@ def inference(opt):
       for b in range(opt.batch_size):
         #결과를 /data/ouput에 저장
         case_id = os.path.basename(filepath[b])[:-4]
-
+        batch_img = out[b, :, :, :]
+        batch_mask = one_hot(batch_img)
         print(case_id)
 
         for j in range(opt.num_class):
@@ -89,11 +92,17 @@ def inference(opt):
           if not os.path.exists(maskDir_case) :
             os.makedirs(maskDir_case)
 
-          mask = out[b, j, :, :]
-          #자연 : 픽셀값 확인하려고 threshold 지움 + *255 함
-          # _, mask = cv2.threshold(np.asarray(mask, dtype='uint8'), 0, 1, cv2.THRESH_BINARY)
+          mask = batch_mask[j, :, :]
+          # mask[mask>0.5] = 255
           mask = np.array(mask)
+
+          # mask_before_nor = out[b, j, :, :]
+          # mask_before_nor = np.array(mask_before_nor)
+          # mask_before_nor = mask_before_nor * 255
+
+          
           cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name(j)+'.png'), mask)
+          # cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name(j)+'before-nor.png'), mask_before_nor)
 
 
 if __name__ == "__main__":

@@ -80,6 +80,7 @@ def evaluator(opt, model, data_loader, loss_criterion):
 
   print("***\nValidation %.2fs => Epoch[%d/%d] :: Loss : %.10f\n"%(time.time()-start_time, opt.epoch_num, opt.n_epochs, total_loss)) 
 
+  # return total_loss
   return total_loss
 
 
@@ -98,7 +99,7 @@ if __name__ == "__main__":
   
   if opt.model == 'unet' :
     #net = unet(opt)
-    net = unet.UNet(opt.num_class) #채송: 6은 num_class! 
+    net = unet.UNet(opt.num_class + 1) 
     
   # loss_criterion = nn.MSELoss()
   loss_criterion = nn.BCELoss()
@@ -126,21 +127,23 @@ if __name__ == "__main__":
   print('===> Setting Optimizer')
   optimizer = torch.optim.Adam(net.parameters(), lr = opt.lr, betas = (opt.b1, opt.b2))
 
-  best_loss = 1.0
+  best_loss = 1000.0
   
   for epoch in range(opt.n_epochs):
     opt.epoch_num = epoch
     train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = loss_criterion)
     valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = loss_criterion)
+  
     if not opt.save_best:
       save_checkpoint(opt, net, epoch, valid_loss) #채송: 여기서 net을 인자로 주는게 맞을까..? 이부분이 너무 헷갈려
       # 은별 :net을 인자로 주는 거 맞는것같아
-      
-    if opt.save_best:
-      if valid_loss < best_loss: 
-        best_loss = valid_loss
-        best_model_wts = copy.deepcopy(net.state_dict())
-#채송: main 함수 다 돌면 valid loss가 가장 좋은 model 저장하도록 하는 
+
+
+      if opt.save_best :
+        if valid_loss < best_loss : 
+          best_loss = valid_loss
+          best_model_wts = copy.deepcopy(net.state_dict())
+          #채송: main 함수 다 돌면 valid loss가 가장 좋은 model 저장하도록 하는 
 
   if opt.save_best:
     save_checkpoint(opt, best_model_wts, epoch, valid_loss)
