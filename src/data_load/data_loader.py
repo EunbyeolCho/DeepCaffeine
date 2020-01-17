@@ -61,8 +61,8 @@ def dicom2png(dcm_pth):
     dc_arr = 255.0 * (dc_arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
     dc_arr[dc_arr>255.0] = 255.0
     dc_arr[dc_arr<0.0] = 0.0
-    W, H = dc_arr.shape
-    dc_arr = dc_arr.reshape(W, H, 1 )
+    H, W = dc_arr.shape
+    dc_arr = dc_arr.reshape(H, W, 1 )
     dc_arr = np.uint8(dc_arr)
     # print(dc_arr.shape)
     # print(dc_arr.dtype)
@@ -73,7 +73,7 @@ def dicom2png(dcm_pth):
     clahe = cv2.createCLAHE(clipLimit = 1.0, tileGridSize = (8,8))
     nor_dc_arr = clahe.apply(dc_arr)
 
-    nor_dc_arr = nor_dc_arr.reshape(1, W, H)
+    nor_dc_arr = nor_dc_arr.reshape(1, H, W)
     
     #그냥 histogram equalization
     # eq_dc_arr = cv2.equalizeHist(dc_arr)
@@ -111,15 +111,6 @@ def normalize(img):
     min = img.min()
     img = (img-min)/(max-min)
     # print(img.dtype)
-
-    return img
-
-def normalize_np(img):
-
-    img = np.float32(img)
-    max = img.max()
-    min = img.min()
-    img = (img-min)/(max-min)
 
     return img
 
@@ -193,22 +184,26 @@ class DatasetFromFolder(data.Dataset):
             
             for img in img_files : 
                 # print('\n\n',img)
-                if '.jpg' in img : 
+                if '.dcm' in img : 
                     #input_img : 0-1 histogram equalization 한 후 
-                    # input_img = dicom2png(os.path.join(img_list_path, img))
-                    input_img = fake_dcm2png(os.path.join(img_list_path, img))
+                    input_img = dicom2png(os.path.join(img_list_path, img))
+                    # input_img = fake_dcm2png(os.path.join(img_list_path, img))
                     #자연 : bce때문에 normaliz 추가함 
                     input_img = normalize(input_img)
-                    c, W , H = input_img.shape
+                    c, H, W = input_img.shape
                 else : #.png
-                    # mask = cv2.imread(os.path.join(img_list_path, img))
-                    mask = fake_dcm2png(os.path.join(img_list_path,img))
+                    mask = cv2.imread(os.path.join(img_list_path, img))
+                    # mask = fake_dcm2png(os.path.join(img_list_path,img))
                     mask = normalize(mask)
                     masks = np.append(masks, mask)
 
-            non = np.zeros((W,H))
-            masks = np.append(masks, non)
-            masks = masks.reshape(self.opt.num_class + 1, W, H )
+            background = np.zeros((H,W))
+            #background  = 0th class
+            masks = np.append(background, masks)
+            masks = masks.reshape(self.opt.num_class + 1, H, W )
+            
+            #자연 : cross entropy loss 일때, target value : 0 <= target[] <= class-1
+            masks = masks.argmax(axis = 0)
             
             # train dataset 에만 transform 반영
             input_img = self.img_transform(input_img)
@@ -216,10 +211,10 @@ class DatasetFromFolder(data.Dataset):
         
         else: #test
             img_list_path = os.path.join(self.test_dir, self.img_list[idx])
-            if '.jpg' in img_list_path : 
+            if '.dcm' in img_list_path : 
                 #input_img : 0-1 histogram equalization 한 후 
-                # input_img = dicom2png(os.path.join(img_list_path, img))
-                input_img = fake_dcm2png(img_list_path)
+                input_img = dicom2png(os.path.join(img_list_path, img))
+                # input_img = fake_dcm2png(img_list_path)
                 input_img = self.img_transform(input_img)
                 input_img = normalize(input_img)
 

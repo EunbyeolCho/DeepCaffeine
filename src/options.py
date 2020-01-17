@@ -9,22 +9,22 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), './data')))
 
 
-pwd = os.getcwd()
-src_dir = os.path.join(pwd, 'src')
-data_dir = os.path.join(src_dir, 'data')
-train_dir = os.path.join(data_dir, 'train')
-test_dir = os.path.join(data_dir, 'test')
-volume_dir = os.path.join(data_dir, 'volume')
-output_dir = os.path.join(data_dir, 'output')
-log_dir = os.path.join(volume_dir, 'logs')
+# pwd = os.getcwd()
+# src_dir = os.path.join(pwd, 'src')
+# data_dir = os.path.join(src_dir, 'data')
+# train_dir = os.path.join(data_dir, 'train')
+# test_dir = os.path.join(data_dir, 'test')
+# volume_dir = os.path.join(data_dir, 'volume')
+# output_dir = os.path.join(data_dir, 'output')
+# log_dir = os.path.join(volume_dir, 'logs')
 
 
-# test_dir = '/data/train'
-# log_dir = '/data/volume/logs'
-# test_dir = '/data/test'
-# output_dir = '/data/output'
-# volume_dir = '/data/volume'
-# weight_dir = '/data/volume/logs' + ID + '_final.hdf5'
+test_dir = '/data/train'
+log_dir = '/data/volume/logs'
+test_dir = '/data/test'
+output_dir = '/data/output'
+volume_dir = '/data/volume'
+weight_dir = '/data/volume/logs' + ID + '_final.hdf5'
 
 
 parser = argparse.ArgumentParser(description = 'HeLP Challenge 2019 Cardiovascular')

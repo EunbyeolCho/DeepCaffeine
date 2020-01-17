@@ -19,7 +19,7 @@ import numpy as np
 '''
 
 def class_name(num):
-  cn = ['Aortic Knob', 'Carina', 'DAO', 'LAA', 'Lt Lower CB', 'Pulmonary Conus', 'Rt Lower CB', 'Rt Upper CB']
+  cn = ['_background', 'Aortic Knob', 'Carina', 'DAO', 'LAA', 'Lt Lower CB', 'Pulmonary Conus', 'Rt Lower CB', 'Rt Upper CB']
   return cn[num]
 
 def inference(opt):
@@ -64,13 +64,12 @@ def inference(opt):
 
       if opt.use_cuda :
         img = img.to(opt.device, dtype = torch.float)
-        masks = masks.to(opt.device, dtype = torch.float)
+        masks = masks.to(opt.device, dtype = torch.long)
 
       out = net(img) #예진:unet의 out은 어떤 형식?
       #채송: unet의 반환값 형식을 말하는거야??
       #out이 어디서 쓰이는 애야..???
       
-      #자연 : 보기 쉽게 0-255로 바꾸려구 추가함
       out = normalize(out)
       # out = out*255
 
@@ -86,23 +85,26 @@ def inference(opt):
         batch_mask = one_hot(batch_img)
         print(case_id)
 
-        for j in range(opt.num_class):
+        for j in range(opt.num_class + 1):
           maskDir_case = os.path.join(maskDir, case_id)
 
-          if not os.path.exists(maskDir_case) :
-            os.makedirs(maskDir_case)
+          if j == 0:
+            pass
+          else : 
+            if not os.path.exists(maskDir_case) :
+              os.makedirs(maskDir_case)
 
-          mask = batch_mask[j, :, :]
-          # mask[mask>0.5] = 255
-          mask = np.array(mask)
+            mask = batch_mask[j , :, :]
+            # mask[mask>0.5] = 255
+            mask = np.array(mask)
 
-          # mask_before_nor = out[b, j, :, :]
-          # mask_before_nor = np.array(mask_before_nor)
-          # mask_before_nor = mask_before_nor * 255
+            # mask_before_one_hot = out[b, j, :, :]
+            # mask_before_one_hot = np.array(mask_before_one_hot)
+            # mask_before_one_hot = mask_before_one_hot * 255
 
-          
-          cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name(j)+'.png'), mask)
-          # cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name(j)+'before-nor.png'), mask_before_nor)
+            
+            cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name(j)+'.png'), mask)
+            # cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name(j)+'before-one-hot.png'), mask_before_one_hot)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 import numpy as np
 
-def one_hot(img):
+def one_hot(img): #img shape = c, H, W
     # print(img.shape)
 
     img = np.array(img)

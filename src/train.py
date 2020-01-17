@@ -28,7 +28,7 @@ def trainer(opt, model, optimizer, data_loader, loss_criterion):
 
     if opt.use_cuda :
       img = img.to(opt.device, dtype = torch.float)
-      masks = masks.to(opt.device, dtype = torch.float)
+      masks = masks.to(opt.device, dtype = torch.long)
       optimizer.zero_grad()
 
     out = model(img)
@@ -64,7 +64,7 @@ def evaluator(opt, model, data_loader, loss_criterion):
 
       if opt.use_cuda :
         img = img.to(opt.device, dtype = torch.float)
-        masks = masks.to(opt.device, dtype = torch.float)
+        masks = masks.to(opt.device, dtype = torch.long)
         optimizer.zero_grad()
 
       out = model(img)
@@ -102,7 +102,8 @@ if __name__ == "__main__":
     net = unet.UNet(opt.num_class + 1) 
     
   # loss_criterion = nn.MSELoss()
-  loss_criterion = nn.BCELoss()
+  # loss_criterion = nn.BCELoss()
+  loss_criterion = nn.CrossEntropyLoss()
   print(net)
   
   
