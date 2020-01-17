@@ -18,20 +18,23 @@ from torchvision.transforms import transforms
 #은별 : 직관적으로 무슨 뜻인지 알겠는데, flip하는 일이 어려운일이 아니니까 직접해보고 결과를 비교하는게 가장 확실할 것 같아!
 
 
+
 def dicom2png(dcm_pth):
 
 #reference https://www.kaggle.com/gzuidhof/full-preprocessing-tutorial
 #reference https://blog.kitware.com/dicom-rescale-intercept-rescale-slope-and-itk/
 #reference https://opencv-python.readthedocs.io/en/latest/doc/20.imageHistogramEqualization/imageHistogramEqualization.html
     
-    # dc = pydicom.dcmread(dcm_pth)
-    dc = pydicom.read_file(dcm_pth)
+    dc = pydicom.dcmread(dcm_pth)
+    # dc = pydicom.read_file(dcm_pth)
     dc_arr = np.array(dc.pixel_array)
 
 
     """자연
     HU(Hounsfield Units)에 맞게 pixel 값 조정
     """
+
+    #-값이 있어서 uint 말고 int 로 했어
     dc_arr = dc_arr.astype(np.int16)
     #자연 : 범위를 넘어간 pixel value는 -2000으로 고정되는데, 이를 water값인 0으로 바꿔줘야함.
     dc_arr[dc_arr == -2000] = 0
@@ -58,24 +61,41 @@ def dicom2png(dcm_pth):
     dc_arr = 255.0 * (dc_arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
     dc_arr[dc_arr>255.0] = 255.0
     dc_arr[dc_arr<0.0] = 0.0
-
+    H, W = dc_arr.shape
+    dc_arr = dc_arr.reshape(H, W, 1 )
+    dc_arr = np.uint8(dc_arr)
+    # print(dc_arr.shape)
+    # print(dc_arr.dtype)
     """자연
     Histogram Equalization & Normalization-2(0-1)
     """
     #자연 : create a CLAHE(Contrast Limited Adaptive Histogram Equalization)
-    clahe = cv2.create(clipLimit = 2.0, tileGridSize = (8,8))
+    clahe = cv2.createCLAHE(clipLimit = 1.0, tileGridSize = (8,8))
     nor_dc_arr = clahe.apply(dc_arr)
-    nor_dc_arr = np.array(nor_dc_arr, dtype = np.float8)
 
-    #자연 : type error날것같은데 안돌려봄, noramlize def 쓸거면 안써도 됨.
-    # nor_dc_arr = np.array(nor_dc_arr/255.0, dtype = np.float8)
+    nor_dc_arr = nor_dc_arr.reshape(1, H, W)
     
-    #자연 : dcm있는 자리에 png로저장
-    # png_pth = dcm_pth.replace('.dcm', '.png')
-    # cv2.imwrite(png_pth, nor_dc_arr)
+    #그냥 histogram equalization
+    # eq_dc_arr = cv2.equalizeHist(dc_arr)
 
+    # return eq_dc_arr
+    # return dc_arr
     return nor_dc_arr
 
+
+#dmc2png잘 돌아가나 체크
+# if __name__ == '__main__' :
+    
+#     dataset = 'D:/data/data-dcm-check'
+#     file_list = glob.glob(dataset + '/*dcm')
+#     print(file_list)
+#     for d in file_list:
+#         fp = os.path.join(dataset, d)
+#         print(fp)
+#         png = dicom2png(fp)
+#         png_pth = os.path.join(dataset, fp[:-4]+'-eq1.png')
+
+#         cv2.imwrite(png_pth, png)
 
 
 def fake_dcm2png(pth):
@@ -86,10 +106,11 @@ def fake_dcm2png(pth):
     return img
 
 def normalize(img):
-    
+
     max = img.max()
     min = img.min()
     img = (img-min)/(max-min)
+    # print(img.dtype)
 
     return img
 
@@ -98,7 +119,7 @@ def mask_transform(opt):
     if opt.augmentation:
         compose = Compose([
             # transforms.Scale(opt.img_size),
-            transforms.CenterCrop(224),
+            # transforms.CenterCrop(224),
             #RandomHorizontalFlip(),
             # transforms.ToTensor(),
         ])
@@ -114,7 +135,7 @@ def img_transform(opt):
     if opt.augmentation:
         compose = Compose([
             # transforms.Scale(opt.img_size),
-            transforms.CenterCrop(224),
+            # transforms.CenterCrop(224),
             #RandomHorizontalFlip(),
             # transforms.ToTensor(),
             """
@@ -163,20 +184,26 @@ class DatasetFromFolder(data.Dataset):
             
             for img in img_files : 
                 # print('\n\n',img)
-                if '.jpg' in img : 
+                if '.dcm' in img : 
                     #input_img : 0-1 histogram equalization 한 후 
-                    # input_img = dicom2png(os.path.join(img_list_path, img))
-                    input_img = fake_dcm2png(os.path.join(img_list_path, img))
+                    input_img = dicom2png(os.path.join(img_list_path, img))
+                    # input_img = fake_dcm2png(os.path.join(img_list_path, img))
                     #자연 : bce때문에 normaliz 추가함 
                     input_img = normalize(input_img)
-                    c, W , H = input_img.shape
+                    c, H, W = input_img.shape
                 else : #.png
-                    # mask = cv2.imread(os.path.join(img_list_path, img))
-                    mask = fake_dcm2png(os.path.join(img_list_path,img))
+                    mask = cv2.imread(os.path.join(img_list_path, img))
+                    # mask = fake_dcm2png(os.path.join(img_list_path,img))
                     mask = normalize(mask)
                     masks = np.append(masks, mask)
 
-            masks = masks.reshape(self.opt.num_class, W, H )
+            background = np.zeros((H,W))
+            #background  = 0th class
+            masks = np.append(background, masks)
+            masks = masks.reshape(self.opt.num_class + 1, H, W )
+            
+            #자연 : cross entropy loss 일때, target value : 0 <= target[] <= class-1
+            masks = masks.argmax(axis = 0)
             
             # train dataset 에만 transform 반영
             input_img = self.img_transform(input_img)
@@ -184,10 +211,10 @@ class DatasetFromFolder(data.Dataset):
         
         else: #test
             img_list_path = os.path.join(self.test_dir, self.img_list[idx])
-            if '.jpg' in img_list_path : 
+            if '.dcm' in img_list_path : 
                 #input_img : 0-1 histogram equalization 한 후 
-                # input_img = dicom2png(os.path.join(img_list_path, img))
-                input_img = fake_dcm2png(img_list_path)
+                input_img = dicom2png(os.path.join(img_list_path, img))
+                # input_img = fake_dcm2png(img_list_path)
                 input_img = self.img_transform(input_img)
                 input_img = normalize(input_img)
 

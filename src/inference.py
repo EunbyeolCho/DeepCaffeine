@@ -7,6 +7,7 @@ from data_load.data_loader import get_test_data_loader
 from data_load.data_loader import normalize
 from models.unet import UNet
 from utils.load_model import load_model
+from utils.one_hot import one_hot
 import time
 import cv2
 import numpy as np
@@ -18,7 +19,7 @@ import numpy as np
 '''
 
 def class_name(num):
-  cn = ['Aortic Knob', 'Carina', 'DAO', 'LAA', 'Lt Lower CB', 'Pulmonary Conus', 'Rt Lower CB', 'Rt Upper CB']
+  cn = ['_background', 'Aortic Knob', 'Carina', 'DAO', 'LAA', 'Lt Lower CB', 'Pulmonary Conus', 'Rt Lower CB', 'Rt Upper CB']
   return cn[num]
 
 def inference(opt):
@@ -30,6 +31,7 @@ def inference(opt):
   
   #load test data
   test_data_loader = get_test_data_loader(opt)
+
   print("test_dir is : {}".format(opt.test_dir))
   
   #output_dir 확인
@@ -62,15 +64,14 @@ def inference(opt):
 
       if opt.use_cuda :
         img = img.to(opt.device, dtype = torch.float)
-        masks = masks.to(opt.device, dtype = torch.float)
+        masks = masks.to(opt.device, dtype = torch.long)
 
       out = net(img) #예진:unet의 out은 어떤 형식?
       #채송: unet의 반환값 형식을 말하는거야??
       #out이 어디서 쓰이는 애야..???
       
-      #자연 : 보기 쉽게 0-255로 바꾸려구 추가함
       out = normalize(out)
-      out = out*255
+      # out = out*255
 
       print("*****************************************")
       print(filepath)
@@ -80,20 +81,30 @@ def inference(opt):
       for b in range(opt.batch_size):
         #결과를 /data/ouput에 저장
         case_id = os.path.basename(filepath[b])[:-4]
-
+        batch_img = out[b, :, :, :]
+        batch_mask = one_hot(batch_img)
         print(case_id)
 
-        for j in range(opt.num_class):
+        for j in range(opt.num_class + 1):
           maskDir_case = os.path.join(maskDir, case_id)
 
-          if not os.path.exists(maskDir_case) :
-            os.makedirs(maskDir_case)
+          if j == 0:
+            pass
+          else : 
+            if not os.path.exists(maskDir_case) :
+              os.makedirs(maskDir_case)
 
-          mask = out[b, j, :, :]
-          #자연 : 픽셀값 확인하려고 threshold 지움 + *255 함
-          # _, mask = cv2.threshold(np.asarray(mask, dtype='uint8'), 0, 1, cv2.THRESH_BINARY)
-          mask = np.array(mask)
-          cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name(j)+'.png'), mask)
+            mask = batch_mask[j , :, :]
+            # mask[mask>0.5] = 255
+            mask = np.array(mask)
+
+            # mask_before_one_hot = out[b, j, :, :]
+            # mask_before_one_hot = np.array(mask_before_one_hot)
+            # mask_before_one_hot = mask_before_one_hot * 255
+
+            
+            cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name(j)+'.png'), mask)
+            # cv2.imwrite(os.path.join(maskDir_case, case_id+'_'+class_name(j)+'before-one-hot.png'), mask_before_one_hot)
 
 
 if __name__ == "__main__":

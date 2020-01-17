@@ -28,7 +28,7 @@ class UNet(nn.Module):
     self.dconv_up3 = double_conv(256 + 512, 256)
     self.dconv_up2 = double_conv(128 + 256, 128)
     self.dconv_up1 = double_conv(128 + 64, 64)
-    
+      
     self.conv_last = nn.Conv2d(64, n_class, 1)
     
     
