@@ -10,13 +10,8 @@ from torchvision.transforms import transforms
 # import sys
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../options')))
 # from options import args
+
 #need to add center crop!!
-# 은별 : 요거 누가 쓴거지? center crop 추가하기는 했는데 사이즈가 애매하군
-# 은별 : 흠 ... tencrop추가할까? 일단은 center crop해놨어용
-
-#자연 : flip 좋은 생각 아닌거 같아, 우리가 detect하는것이 오른쪽/왼쪽이 정해져 있어서 편파적으로 학습하게 두는게 더 좋을것같은데 어때?
-#은별 : 직관적으로 무슨 뜻인지 알겠는데, flip하는 일이 어려운일이 아니니까 직접해보고 결과를 비교하는게 가장 확실할 것 같아!
-
 
 
 def dicom2png(dcm_pth):
@@ -26,7 +21,6 @@ def dicom2png(dcm_pth):
 #reference https://opencv-python.readthedocs.io/en/latest/doc/20.imageHistogramEqualization/imageHistogramEqualization.html
     
     dc = pydicom.dcmread(dcm_pth)
-    # dc = pydicom.read_file(dcm_pth)
     dc_arr = np.array(dc.pixel_array)
 
 
@@ -64,8 +58,7 @@ def dicom2png(dcm_pth):
     H, W = dc_arr.shape
     dc_arr = dc_arr.reshape(H, W, 1 )
     dc_arr = np.uint8(dc_arr)
-    # print(dc_arr.shape)
-    # print(dc_arr.dtype)
+
     """자연
     Histogram Equalization & Normalization-2(0-1)
     """
@@ -78,32 +71,8 @@ def dicom2png(dcm_pth):
     #그냥 histogram equalization
     # eq_dc_arr = cv2.equalizeHist(dc_arr)
 
-    # return eq_dc_arr
-    # return dc_arr
     return nor_dc_arr
 
-
-#dmc2png잘 돌아가나 체크
-# if __name__ == '__main__' :
-    
-#     dataset = 'D:/data/data-dcm-check'
-#     file_list = glob.glob(dataset + '/*dcm')
-#     print(file_list)
-#     for d in file_list:
-#         fp = os.path.join(dataset, d)
-#         print(fp)
-#         png = dicom2png(fp)
-#         png_pth = os.path.join(dataset, fp[:-4]+'-eq1.png')
-
-#         cv2.imwrite(png_pth, png)
-
-
-def fake_dcm2png(pth):
-
-    img = cv2.imread(pth, cv2.IMREAD_GRAYSCALE)
-    img = img.reshape(1,400,400)
-
-    return img
 
 def normalize(img):
 
@@ -119,7 +88,7 @@ def mask_transform(opt):
     if opt.augmentation:
         compose = Compose([
             # transforms.Scale(opt.img_size),
-            # transforms.CenterCrop(224),
+            # transforms.CenterCrop(1024),
             #RandomHorizontalFlip(),
             # transforms.ToTensor(),
         ])
@@ -135,7 +104,7 @@ def img_transform(opt):
     if opt.augmentation:
         compose = Compose([
             # transforms.Scale(opt.img_size),
-            # transforms.CenterCrop(224),
+            # transforms.CenterCrop(1024),
             #RandomHorizontalFlip(),
             # transforms.ToTensor(),
             """
@@ -151,6 +120,19 @@ def img_transform(opt):
         ])
         
     return compose
+
+
+def resize_mask(masks,  H, W):
+    print(type(masks))
+    new_mask = np.array([])
+    new_mask = masks[0:H, 0:W]
+    return new_mask
+
+def resize_img(img, H, W):
+    print(type(img))
+    new_img = np.array([])
+    new_img = img[:, 0:H, 0:W]
+    return new_img
 
 
 class DatasetFromFolder(data.Dataset):
@@ -191,11 +173,14 @@ class DatasetFromFolder(data.Dataset):
                     #자연 : bce때문에 normaliz 추가함 
                     input_img = normalize(input_img)
                     c, H, W = input_img.shape
-                else : #.png
-                    mask = cv2.imread(os.path.join(img_list_path, img))
+                    # print('input img : ', c, H, W)
+
+                elif '.png' in img : #.png
+                    mask = cv2.imread(os.path.join(img_list_path, img), cv2.IMREAD_GRAYSCALE)
                     # mask = fake_dcm2png(os.path.join(img_list_path,img))
                     mask = normalize(mask)
                     masks = np.append(masks, mask)
+                    # print('mask size : ', mask.shape)
 
             background = np.zeros((H,W))
             #background  = 0th class
@@ -208,6 +193,12 @@ class DatasetFromFolder(data.Dataset):
             # train dataset 에만 transform 반영
             input_img = self.img_transform(input_img)
             masks = self.mask_transform(masks)
+
+            # print('masks size : ', masks.shape)
+
+            #crop
+            input_img = resize_img(input_img, 512, 512)
+            masks = resize_mask(masks, 512, 512)
         
         else: #test
             img_list_path = os.path.join(self.test_dir, self.img_list[idx])

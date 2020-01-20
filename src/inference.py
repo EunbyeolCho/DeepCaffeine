@@ -88,7 +88,7 @@ def inference(opt):
         for j in range(opt.num_class + 1):
           maskDir_case = os.path.join(maskDir, case_id)
 
-          if j == 0:
+          if j == 0: #background
             pass
           else : 
             if not os.path.exists(maskDir_case) :
