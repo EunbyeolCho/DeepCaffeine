@@ -39,7 +39,7 @@ def inference(opt):
     os.makedirs(opt.output_dir)
   
   #/data/volume에서 저장된 model 중 best model load
-  _, net = load_model(opt, opt.volume_dir)
+  _, net = load_model(opt, opt.weight_dir)
   loss_criterion = nn.CrossEntropyLoss()
   
   if torch.cuda.device_count() > 1 and opt.multi_gpu : 
