@@ -2,8 +2,8 @@ import argparse
 import os
 import torch
 
-# ID = os.environ['ID']
-# ID = str(ID)
+ID = os.environ['ID']
+ID = str(ID)
 
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), './data')))
@@ -32,7 +32,7 @@ parser.add_argument('--log_dir', type = str, default = log_dir)
 parser.add_argument('--test_dir', type = str, default = test_dir)
 parser.add_argument('--output_dir', type = str, default = output_dir)
 parser.add_argument('--volume_dir', type = str, default = volume_dir)
-# parser.add_argument('--weight_dir', type = str, default = weight_dir)
+parser.add_argument('--weight_dir', type = str, default = weight_dir)
 
 
 parser.add_argument('--use_cuda', type = bool, default = True)

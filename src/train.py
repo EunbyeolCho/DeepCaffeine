@@ -28,6 +28,7 @@ def trainer(opt, model, optimizer, data_loader, loss_criterion):
 
     if opt.use_cuda :
       img = img.to(opt.device, dtype = torch.float)
+      #자연 : cross_entropy 때문에 mask type long으로 바꿈
       masks = masks.to(opt.device, dtype = torch.long)
       optimizer.zero_grad()
 
