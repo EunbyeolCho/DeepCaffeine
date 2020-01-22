@@ -17,7 +17,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), './data'
 # volume_dir = 'D:/data/cardiovascular_sample/volume'
 
 
-test_dir = '/data/train'
+train_dir = '/data/train'
 log_dir = '/data/volume/logs'
 test_dir = '/data/test'
 output_dir = '/data/output'
