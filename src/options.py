@@ -2,24 +2,22 @@ import argparse
 import os
 import torch
 
-# ID = os.environ['ID']
-# ID = str(ID)
+ID = os.environ['ID']
+ID = str(ID)
 
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), './data')))
 
 
-# pwd = os.getcwd()
-# src_dir = os.path.join(pwd, 'src')
-# data_dir = os.path.join(src_dir, 'data')
-# train_dir = os.path.join(data_dir, 'train')
-# test_dir = os.path.join(data_dir, 'test')
-# volume_dir = os.path.join(data_dir, 'volume')
-# output_dir = os.path.join(data_dir, 'output')
-# log_dir = os.path.join(volume_dir, 'logs')
+# data_dir = 'D:/data/cardiovascular_sample'
+# train_dir = 'D:/data/cardiovascular_sample/train'
+# test_dir = 'D:/data/cardiovascular_sample/test'
+# log_dir = 'D:/data/cardiovascular_sample/logs'
+# output_dir = 'D:/data/cardiovascular_sample/output'
+# volume_dir = 'D:/data/cardiovascular_sample/volume'
 
 
-test_dir = '/data/train'
+train_dir = '/data/train'
 log_dir = '/data/volume/logs'
 test_dir = '/data/test'
 output_dir = '/data/output'
@@ -34,7 +32,7 @@ parser.add_argument('--log_dir', type = str, default = log_dir)
 parser.add_argument('--test_dir', type = str, default = test_dir)
 parser.add_argument('--output_dir', type = str, default = output_dir)
 parser.add_argument('--volume_dir', type = str, default = volume_dir)
-# parser.add_argument('--weight_dir', type = str, default = weight_dir)
+parser.add_argument('--weight_dir', type = str, default = weight_dir)
 
 
 parser.add_argument('--use_cuda', type = bool, default = True)

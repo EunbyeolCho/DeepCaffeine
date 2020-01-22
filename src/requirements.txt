@@ -1,1 +1,5 @@
 pip==19.3
+opencv-python
+Pydicom
+matplotlib
+Pillow
