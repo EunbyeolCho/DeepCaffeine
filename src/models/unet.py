@@ -33,18 +33,27 @@ class UNet(nn.Module):
     
     
   def forward(self, x):
+      #print("input x : ", x.shape)
       conv1 = self.dconv_down1(x)
+      #print("conv1 : ", conv1.shape)
       x = self.maxpool(conv1)
+      #print("1st maxpool : ", x.shape)
 
       conv2 = self.dconv_down2(x)
+      #print("conv2 : ", conv2.shape)
       x = self.maxpool(conv2)
-      
+      #print("2nd maxpool : ", x.shape)
+
       conv3 = self.dconv_down3(x)
-      x = self.maxpool(conv3)   
+      #print("conv3 : ", conv3.shape)
+      x = self.maxpool(conv3) 
+      #print("3rd maxpool : ", x.shape)  
       
       x = self.dconv_down4(x)
+      #print("conv4 : ", x.shape)
       
-      x = self.upsample(x)        
+      x = self.upsample(x)     
+      #print("unsample : ", x.shape)   
       x = torch.cat([x, conv3], dim=1)
       
       x = self.dconv_up3(x)

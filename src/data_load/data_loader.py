@@ -10,12 +10,14 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
 # import sys
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../options')))
-# from options import args
+from options import args
+
+from skimage.external.tifffile import imsave, imread, imshow
 
 #need to add center crop!!
 
 
-def dicom2png(dcm_pth):
+def dicom2png(opt, dcm_pth):
 
 #reference https://www.kaggle.com/gzuidhof/full-preprocessing-tutorial
 #reference https://blog.kitware.com/dicom-rescale-intercept-rescale-slope-and-itk/
@@ -23,119 +25,117 @@ def dicom2png(dcm_pth):
     
     dc = pydicom.dcmread(dcm_pth)
     dc_arr = np.array(dc.pixel_array)
+    # dc_arr = dc_arr.astype(np.int16)
+    # print(dc_arr.dtype)
 
+    if opt.histo_equl:
+        """자연
+        Normalization-1(0-255)
+        -1024~2000 -> -1000~400만 보고싶어 -> 0-255
+        """
 
-    """자연
-    HU(Hounsfield Units)에 맞게 pixel 값 조정
-    """
+        MIN_BOUND = dc_arr.min()
+        MAX_BOUND = dc_arr.max()
 
-    #-값이 있어서 uint 말고 int 로 했어
-    dc_arr = dc_arr.astype(np.int16)
-    #자연 : 범위를 넘어간 pixel value는 -2000으로 고정되는데, 이를 water값인 0으로 바꿔줘야함.
-    dc_arr[dc_arr == -2000] = 0
+        # dc_arr = dc_arr.astype(np.float32)
+        dc_arr = 255.0 * (dc_arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
+        dc_arr[dc_arr>255.0] = 255.0
+        dc_arr[dc_arr<0.0] = 0.0
+        # H, W = dc_arr.shape
+        dc_arr = np.uint8(dc_arr)
 
-    intercept = dc.RescaleIntercept
-    slope = dc.RescaleSlope
-    # print('\nslope : %05f\nintercept : %05f\n'%(slope, intercept))
-
-    if slope != 1:
-        dc_arr = slope*dc_arr.astype(np.float64)
-        dc_arr = dc_arr.astype(np.int16)
-
-    dc_arr +=np.int16(intercept)
-
-    """자연
-    Normalization-1(0-255)
-    -1024~2000 -> -1000~400만 보고싶어 -> 0-255
-    """
-
-    MIN_BOUND = -1000.0
-    MAX_BOUND = 400.0
-
-
-    dc_arr = 255.0 * (dc_arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
-    dc_arr[dc_arr>255.0] = 255.0
-    dc_arr[dc_arr<0.0] = 0.0
-    H, W = dc_arr.shape
-    #dc_arr = dc_arr.reshape(H, W, 1 )
-    dc_arr = np.uint8(dc_arr)
-
-    """자연
-    Histogram Equalization & Normalization-2(0-1)
-    """
-    #자연 : create a CLAHE(Contrast Limited Adaptive Histogram Equalization)
-    clahe = cv2.createCLAHE(clipLimit = 1.0, tileGridSize = (8,8))
-    nor_dc_arr = clahe.apply(dc_arr)
-
-    #예진 : _getitem_에서 reshape 해준다
-    #nor_dc_arr = nor_dc_arr.reshape(1, H, W)
+        """자연
+        Histogram Equalization & Normalization-2(0-1)
+        """
+        #자연 : create a CLAHE(Contrast Limited Adaptive Histogram Equalization)
+        clahe = cv2.createCLAHE(clipLimit = 1.0, tileGridSize = (8,8))
+        dc_arr = clahe.apply(dc_arr)
     
-    #그냥 histogram equalization
-    # eq_dc_arr = cv2.equalizeHist(dc_arr)
+        #그냥 histogram equalization
+        # dc_arr = cv2.equalizeHist(dc_arr)
 
-    return nor_dc_arr
+    return dc_arr
+    # return dc_arr
 
 
 def normalize(img):
 
+    # print(img.dtype)
     max = img.max()
     min = img.min()
+    # print(max.dtype)
     img = (img-min)/(max-min)
+    # print((img-min).dtype)
     # print(img.dtype)
-
     return img
 
 
-def mask_transform(opt):
-    if opt.augmentation:
-        compose = Compose([
-            transforms.Scale(opt.img_size),
-            # transforms.CenterCrop(224),
-            #RandomHorizontalFlip(),
-            # transforms.ToTensor(),
-        ])
+def mask_transform(opt, mask):
+    # h,w 중 작은 사이즈에 맞춰 crop 후 resize
+    H, W = mask.shape
+
+    if(H > W):
+        diff = H-W
+        crop_mask = mask[diff:H, 0:W]
     else:
-        compose = Compose([
-            transforms.Scale(opt.img_size),
-            # transforms.ToTensor()
-        ])
+        diff = W-H
+        crop_mask = mask[0:H, diff:W]
 
-    return compose
+    resize_mask = cv2.resize(crop_mask, (opt.img_size, opt.img_size), interpolation=cv2.INTER_CUBIC)
 
-def img_transform(opt):
-    """
-    # Normalize or Histogram Equalization? choose 1
-    # 예진: transfroms에서 normalize하려면 tensor로 변경해야하므로 따로 함
-    transforms.Normalize([0.485, 0.456, 0.406],[0.229, 0.224, 0.225])
-    """
-    if opt.augmentation:
-        compose = Compose([
-            transforms.Scale(opt.img_size),
-            # transforms.CenterCrop(224),
-            #RandomHorizontalFlip(),
-            # transforms.ToTensor(),
-        ])
+    return resize_mask
+
+
+def img_transform(opt, img):
+    # h,w 중 작은 사이즈에 맞춰 crop 후 resize
+    H, W = img.shape
+
+    if(H > W):
+        diff = H-W
+        crop_img = img[diff:H, 0:W]
     else:
-        compose = Compose([
-            transforms.Scale(opt.img_size),
-            # transforms.ToTensor()
-        ])
-        
-    return compose
+        diff = W-H
+        crop_img = img[0:H, diff:W]
 
 
-def resize_mask(masks,  H, W):
-    print(type(masks))
-    new_mask = np.array([])
-    new_mask = masks[0:H, 0:W]
-    return new_mask
+    resize_img = cv2.resize(crop_img, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
 
-def resize_img(img, H, W):
-    print(type(img))
-    new_img = np.array([])
-    new_img = img[:, 0:H, 0:W]
-    return new_img
+    return resize_img
 
+
+"""
+if __name__ == "__main__":
+
+    opt= args
+    
+    path = './data/test'
+    imgs = os.listdir(path)
+    img = os.path.join(path, imgs[0])
+
+    dcm = dicom2png(img)
+
+    # dcm = cv2.normalize(dcm, dcm, 0, 1, cv2.NORM_MINMAX)
+    print(dcm.shape)
+    # h, w = dcm.shape
+    # dcm = dcm.reshape(h, w, 1)
+    # compose = transforms.Compose([transforms.ToTensor()])
+    # dcm = compose(dcm)
+    # dcm = np.array(dcm)
+
+    # dcm = normalize(dcm)
+    dcm = dcm.astype(np.float32)
+    dcm_name = os.path.join(path, 'before_aug.tiff')
+
+    # cv2.imwrite(dcm_name, dcm)
+    imsave(dcm_name, dcm)
+
+
+    # dcm = dcm.reshape(h,w)
+    trans = img_transform(opt, dcm)
+    # trans = normalize(trans)
+    trans_name = os.path.join(path, 'after_aug.tiff')
+    imsave(trans_name, trans)
+"""
 
 class DatasetFromFolder(data.Dataset):
     def __init__(self, opt):
@@ -152,8 +152,6 @@ class DatasetFromFolder(data.Dataset):
         self.train_dir = opt.train_dir
         self.test_dir = opt.test_dir
         self.opt = opt
-        self.img_transform = img_transform(opt)
-        self.mask_transform = mask_transform(opt)
 
     def __getitem__(self, idx):
 
@@ -167,18 +165,19 @@ class DatasetFromFolder(data.Dataset):
             masks = np.array([])
             
             for img in img_files : 
-                # print('\n\n',img)
                 if '.dcm' in img : 
                     #input_img : 0-1 histogram equalization 한 후 
-                    input_img = dicom2png(os.path.join(img_list_path, img))
+                    input_img = dicom2png(self.opt, os.path.join(img_list_path, img))
                     #print("img.shape before transform: ", input_img.shape) #(3001, 2983)
-                    #예진 : transforms.Compose 이용하기 위해 PIL Image로 변형
-                    input_img = Image.fromarray(np.uint8(input_img))
-                    #transform: rescale
-                    input_img = self.img_transform(input_img)
-                    #자연 : bce때문에 normaliz 추가함 
-                    #예진 : PIL Image를 다시 normalize하기 위해 numpy array로 변경
-                    input_img = np.array(input_img)
+                    
+                    # #예진 : transforms.Compose 이용하기 위해 PIL Image로 변형
+                    # input_img = Image.fromarray(np.uint8(input_img))
+                    
+                    # #transform: rescale
+                    input_img = img_transform(self.opt, input_img)
+                    
+                    #예진 : PIL Image를 다c, H, W = img.shape
+                    # input_img = np.array(input_img)
                     input_img = normalize(input_img)
                     #print("transform 후 최종: img.shape: ", input_img.shape) #(1006, 1000)
                     H, W = input_img.shape
@@ -189,16 +188,18 @@ class DatasetFromFolder(data.Dataset):
                     #print('mask size : ', mask.shape) #(3001, 2983)
                     #mask = fake_dcm2png(os.path.join(img_list_path,img))
                     #예진 : transforms.Compose 이용하기 위해 PIL Image로 변형
-                    mask = Image.fromarray(np.uint8(mask))
+                    # mask = Image.fromarray(np.uint8(mask))
                     #transform: rescale
-                    mask = self.mask_transform(mask)
+                    mask = mask_transform(self.opt, mask)
                     #예진 : PIL Image를 다시 normalize하기 위해 numpy array로 변경
-                    mask = np.array(mask)
+                    # mask = np.array(mask)
                     #print("transform 후 mask.shape: ", mask.shape) #(1006, 1000)
                     #mask = normalize(mask)
+                    # mask = crop_mask(mask)
                     masks = np.append(masks, mask)
         
                 else : #.png
+                    print("[*] extension is not in (dcm, png)")
                     pass
 
             background = np.zeros((H,W))
@@ -217,10 +218,12 @@ class DatasetFromFolder(data.Dataset):
             img_list_path = os.path.join(self.test_dir, self.img_list[idx])
             if '.dcm' in img_list_path : 
                 #input_img : 0-1 histogram equalization 한 후 
-                input_img = dicom2png(os.path.join(img_list_path, img))
+                input_img = dicom2png(self.opt, os.path.join(img_list_path, img))
                 # input_img = fake_dcm2png(img_list_path)
-                input_img = self.img_transform(input_img)
+                input_img = img_transform(self.opt, input_img)
                 input_img = normalize(input_img)
+                H, W = input_img.shape
+                input_img = input_img.reshape(1, H, W)
 
             masks = np.array([])
 
