@@ -2,27 +2,29 @@ import argparse
 import os
 import torch
 
-#ID = os.environ['ID']
-#ID = str(ID)
+ID = os.environ['ID']
+ID = str(ID)
 
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), './data')))
 
 
+'''
 # data_dir = 'D:/data/cardiovascular_sample'
 # train_dir = 'D:/data/cardiovascular_sample/train'
 # test_dir = 'D:/data/cardiovascular_sample/test'
 # log_dir = 'D:/data/cardiovascular_sample/logs'
 # output_dir = 'D:/data/cardiovascular_sample/output'
 # volume_dir = 'D:/data/cardiovascular_sample/volume'
-
 '''
+
 train_dir = '/data/train'
 log_dir = '/data/volume/logs'
 test_dir = '/data/test'
 output_dir = '/data/output'
 volume_dir = '/data/volume'
 weight_dir = '/data/volume/logs' + ID + '_final.hdf5'
+
 '''
 #local_test
 train_dir = './data/train'
@@ -31,6 +33,7 @@ test_dir = './data/test'
 output_dir = './data/output'
 volume_dir = './data/volume'
 weight_dir = './data/volume/logs' + '_final.hdf5'
+'''
 
 parser = argparse.ArgumentParser(description = 'HeLP Challenge 2019 Cardiovascular')
 
