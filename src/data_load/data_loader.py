@@ -89,13 +89,8 @@ def normalize(img):
 def mask_transform(opt):
     if opt.augmentation:
         compose = Compose([
-<<<<<<< Updated upstream
-            # transforms.Scale(opt.img_size),
-            # transforms.CenterCrop(1024),
-=======
             transforms.Scale(opt.img_size),
             # transforms.CenterCrop(224),
->>>>>>> Stashed changes
             #RandomHorizontalFlip(),
             # transforms.ToTensor(),
         ])
@@ -115,13 +110,8 @@ def img_transform(opt):
     """
     if opt.augmentation:
         compose = Compose([
-<<<<<<< Updated upstream
-            # transforms.Scale(opt.img_size),
-            # transforms.CenterCrop(1024),
-=======
             transforms.Scale(opt.img_size),
             # transforms.CenterCrop(224),
->>>>>>> Stashed changes
             #RandomHorizontalFlip(),
             # transforms.ToTensor(),
         ])
@@ -181,42 +171,35 @@ class DatasetFromFolder(data.Dataset):
                 if '.dcm' in img : 
                     #input_img : 0-1 histogram equalization 한 후 
                     input_img = dicom2png(os.path.join(img_list_path, img))
-                    #print("img.shape before transform: ", input_img.shape) #(H, W)
+                    #print("img.shape before transform: ", input_img.shape) #(3001, 2983)
                     #예진 : transforms.Compose 이용하기 위해 PIL Image로 변형
                     input_img = Image.fromarray(np.uint8(input_img))
                     #transform: rescale
                     input_img = self.img_transform(input_img)
-                    # input_img = fake_dcm2png(os.path.join(img_list_path, img))
                     #자연 : bce때문에 normaliz 추가함 
                     #예진 : PIL Image를 다시 normalize하기 위해 numpy array로 변경
                     input_img = np.array(input_img)
                     input_img = normalize(input_img)
-<<<<<<< Updated upstream
-                    c, H, W = input_img.shape
-                    # print('input img : ', c, H, W)
+                    #print("transform 후 최종: img.shape: ", input_img.shape) #(1006, 1000)
+                    H, W = input_img.shape
+                    input_img = input_img.reshape(1, H, W)
 
                 elif '.png' in img : #.png
                     mask = cv2.imread(os.path.join(img_list_path, img), cv2.IMREAD_GRAYSCALE)
-=======
-                    #print("transform 후 최종: img.shape: ", input_img.shape)
-                    H, W = input_img.shape
-                    input_img = input_img.reshape(1, H, W)
-                    #c, H, W = input_img.shape  #(1, 3001, 2983)
-                else : #.png
-                    mask = cv2.imread(os.path.join(img_list_path, img)) #mask shape: (3001, 2983, 3)
-                    mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY) # 3 channel --> single channel
->>>>>>> Stashed changes
-                    # mask = fake_dcm2png(os.path.join(img_list_path,img))
+                    #print('mask size : ', mask.shape) #(3001, 2983)
+                    #mask = fake_dcm2png(os.path.join(img_list_path,img))
                     #예진 : transforms.Compose 이용하기 위해 PIL Image로 변형
                     mask = Image.fromarray(np.uint8(mask))
                     #transform: rescale
                     mask = self.mask_transform(mask)
                     #예진 : PIL Image를 다시 normalize하기 위해 numpy array로 변경
                     mask = np.array(mask)
-                    mask = normalize(mask)
-                    #print("transform 후 mask.shape: ", mask.shape)
+                    #print("transform 후 mask.shape: ", mask.shape) #(1006, 1000)
+                    #mask = normalize(mask)
                     masks = np.append(masks, mask)
-                    # print('mask size : ', mask.shape)
+        
+                else : #.png
+                    pass
 
             background = np.zeros((H,W))
             #background  = 0th class
@@ -226,20 +209,9 @@ class DatasetFromFolder(data.Dataset):
             #자연 : cross entropy loss 일때, target value : 0 <= target[] <= class-1
             masks = masks.argmax(axis = 0)
             
-            # train dataset 에만 transform 반영
-<<<<<<< Updated upstream
-            input_img = self.img_transform(input_img)
-            masks = self.mask_transform(masks)
-
-            # print('masks size : ', masks.shape)
-
-            #crop
-            input_img = resize_img(input_img, 512, 512)
-            masks = resize_mask(masks, 512, 512)
-=======
+            #train dataset 에만 transform 반영
             #input_img = self.img_transform(input_img)
             #masks = self.mask_transform(masks)
->>>>>>> Stashed changes
         
         else: #test
             img_list_path = os.path.join(self.test_dir, self.img_list[idx])
