@@ -12,7 +12,7 @@ from torchvision.transforms import transforms
 # sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../options')))
 from options import args
 
-from skimage.external.tifffile import imsave, imread, imshow
+#from skimage.external.tifffile import imsave, imread, imshow
 
 #need to add center crop!!
 
