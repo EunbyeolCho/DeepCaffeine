@@ -9,14 +9,13 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), './data')))
 
 
-'''
+
 # data_dir = 'D:/data/cardiovascular_sample'
 # train_dir = 'D:/data/cardiovascular_sample/train'
 # test_dir = 'D:/data/cardiovascular_sample/test'
 # log_dir = 'D:/data/cardiovascular_sample/logs'
 # output_dir = 'D:/data/cardiovascular_sample/output'
 # volume_dir = 'D:/data/cardiovascular_sample/volume'
-'''
 
 train_dir = '/data/train'
 log_dir = '/data/volume/logs'
@@ -25,15 +24,13 @@ output_dir = '/data/output'
 volume_dir = '/data/volume'
 weight_dir = '/data/volume/logs' + ID + '_final.hdf5'
 
-'''
-#local_test
-train_dir = './data/train'
-log_dir = './data/volume/logs'
-test_dir = './data/test'
-output_dir = './data/output'
-volume_dir = './data/volume'
-weight_dir = './data/volume/logs' + '_final.hdf5'
-'''
+#예진 local_test
+# train_dir = './data/train'
+# log_dir = './data/volume/logs'
+# test_dir = './data/test'
+# output_dir = './data/output'
+# volume_dir = './data/volume'
+# weight_dir = './data/volume/logs' + '_final.hdf5'
 
 
 parser = argparse.ArgumentParser(description = 'HeLP Challenge 2019 Cardiovascular')
@@ -72,7 +69,7 @@ parser.add_argument('--b2', type = float, default = 0.999,
 # data loader argument
 parser.add_argument('--img_size', type = int, default = 512,
                     help = '256, 512, ...')
-parser.add_argument('--histo_equl', type = bool, default=True)
+parser.add_argument('--histo_equal', type = bool, default=True)
 parser.add_argument('--augmentation', type = bool, default = False,
                     help = 'augmentation (flip)augmentation fro training set')
 parser.add_argument('--num_class', type = int, default = 8)
@@ -82,8 +79,6 @@ parser.add_argument('--save_best', type = bool, default = False, help = 'you can
 parser.add_argument('--train_ratio', type =float, default = 0.8,
                     help = 'ratio of trainset/dataset, trainset : validset = train_ratio : 1-train_ratio')
 
-parser.add_argument('--IMG_W', type = int, default=None)
-parser.add_argument('--IMG_H', type = int, default=None)
 
 args = parser.parse_args()
 

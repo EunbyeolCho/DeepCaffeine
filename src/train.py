@@ -1,9 +1,6 @@
 import os
-#예진:tensorflow 필요없어 주석처리, import torch, random, tnesorboardX
-#import tensorflow as tf
 import torch
 import random
-# from tensorboardX import SummaryWriter 
 from time import sleep
 from options import args
 import time
@@ -33,9 +30,6 @@ def trainer(opt, model, optimizer, data_loader, loss_criterion):
       optimizer.zero_grad()
 
     out = model(img)
-
-    #to use bce loss
-    out = normalize(out)
 
     loss = loss_criterion(out, masks)
     loss.backward()
@@ -70,9 +64,6 @@ def evaluator(opt, model, data_loader, loss_criterion):
 
       out = model(img)
 
-      #to use bce loss
-      out = normalize(out)
-
       loss = loss_criterion(out, masks)
 
       total_loss +=loss.item()
@@ -81,7 +72,6 @@ def evaluator(opt, model, data_loader, loss_criterion):
 
   print("***\nValidation %.2fs => Epoch[%d/%d] :: Loss : %.10f\n"%(time.time()-start_time, opt.epoch_num, opt.n_epochs, total_loss)) 
 
-  # return total_loss
   return total_loss
 
 
@@ -99,11 +89,9 @@ if __name__ == "__main__":
   log_file = os.path.join(opt.log_dir, '%s_log.csv'%(opt.model))
   
   if opt.model == 'unet' :
-    #net = unet(opt)
+
     net = unet.UNet(opt.num_class + 1) 
     
-  # loss_criterion = nn.MSELoss()
-  # loss_criterion = nn.BCELoss()
   loss_criterion = nn.CrossEntropyLoss()
   print(net)
   
@@ -137,9 +125,7 @@ if __name__ == "__main__":
     valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = loss_criterion)
   
     if not opt.save_best:
-      save_checkpoint(opt, net, epoch, valid_loss) #채송: 여기서 net을 인자로 주는게 맞을까..? 이부분이 너무 헷갈려
-      # 은별 :net을 인자로 주는 거 맞는것같아
-
+      save_checkpoint(opt, net, epoch, valid_loss)
 
       if opt.save_best :
         if valid_loss < best_loss : 

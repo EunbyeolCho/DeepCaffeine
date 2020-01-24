@@ -25,10 +25,10 @@ def dicom2png(opt, dcm_pth):
     
     dc = pydicom.dcmread(dcm_pth)
     dc_arr = np.array(dc.pixel_array)
-    # dc_arr = dc_arr.astype(np.int16)
+    dc_arr = dc_arr.astype(np.int16)
     # print(dc_arr.dtype)
 
-    if opt.histo_equl:
+    if opt.histo_equal:
         """자연
         Normalization-1(0-255)
         -1024~2000 -> -1000~400만 보고싶어 -> 0-255
@@ -37,15 +37,14 @@ def dicom2png(opt, dcm_pth):
         MIN_BOUND = dc_arr.min()
         MAX_BOUND = dc_arr.max()
 
-        # dc_arr = dc_arr.astype(np.float32)
         dc_arr = 255.0 * (dc_arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
         dc_arr[dc_arr>255.0] = 255.0
         dc_arr[dc_arr<0.0] = 0.0
-        # H, W = dc_arr.shape
+        #cv2 clahe 사용하기 위해 uint8로 바꿈
         dc_arr = np.uint8(dc_arr)
 
         """자연
-        Histogram Equalization & Normalization-2(0-1)
+        Histogram Equalization
         """
         #자연 : create a CLAHE(Contrast Limited Adaptive Histogram Equalization)
         clahe = cv2.createCLAHE(clipLimit = 1.0, tileGridSize = (8,8))
@@ -55,17 +54,15 @@ def dicom2png(opt, dcm_pth):
         # dc_arr = cv2.equalizeHist(dc_arr)
 
     return dc_arr
-    # return dc_arr
 
-
+#0-1 normalize and change dtype float64 -> float16
 def normalize(img):
 
-    # print(img.dtype)
     max = img.max()
     min = img.min()
-    # print(max.dtype)
     img = (img-min)/(max-min)
-    # print((img-min).dtype)
+    # print(img.dtype)
+    img = img.astype(np.float16)
     # print(img.dtype)
     return img
 
@@ -103,7 +100,7 @@ def img_transform(opt, img):
     return resize_img
 
 
-"""
+""" CHECK DCM
 if __name__ == "__main__":
 
     opt= args
@@ -155,6 +152,9 @@ class DatasetFromFolder(data.Dataset):
 
     def __getitem__(self, idx):
 
+        masks = np.array([])
+        img_size = np.array([])
+
         #예진: train/test 분리
         if self.opt.mode == 'train':
             #ex) img_list_path = '/data/train/1000000'
@@ -162,44 +162,35 @@ class DatasetFromFolder(data.Dataset):
             #ex) img_files = ['100000.dcm','100000_AorticKnob.png','100000_Carina.png', ...] -> 1개의 dcm + 8개 mask
             img_files = os.listdir(img_list_path)
 
-            masks = np.array([])
-            
             for img in img_files : 
                 if '.dcm' in img : 
-                    #input_img : 0-1 histogram equalization 한 후 
+
                     input_img = dicom2png(self.opt, os.path.join(img_list_path, img))
                     #print("img.shape before transform: ", input_img.shape) #(3001, 2983)
-                    
-                    # #예진 : transforms.Compose 이용하기 위해 PIL Image로 변형
-                    # input_img = Image.fromarray(np.uint8(input_img))
-                    
-                    # #transform: rescale
+
+                    # crop & resize
                     input_img = img_transform(self.opt, input_img)
                     
-                    #예진 : PIL Image를 다c, H, W = img.shape
-                    # input_img = np.array(input_img)
+                    #0-1 normalize and change dtype float64 -> float16
                     input_img = normalize(input_img)
-                    #print("transform 후 최종: img.shape: ", input_img.shape) #(1006, 1000)
+                    #print("transform 후 최종: img.shape: ", input_img.shape) #(512, 512)
                     H, W = input_img.shape
                     input_img = input_img.reshape(1, H, W)
+
+                    img_size = np.append(img_size, (H,W))
 
                 elif '.png' in img : #.png
                     mask = cv2.imread(os.path.join(img_list_path, img), cv2.IMREAD_GRAYSCALE)
                     #print('mask size : ', mask.shape) #(3001, 2983)
-                    #mask = fake_dcm2png(os.path.join(img_list_path,img))
-                    #예진 : transforms.Compose 이용하기 위해 PIL Image로 변형
-                    # mask = Image.fromarray(np.uint8(mask))
-                    #transform: rescale
+
+                    #crop & resize
                     mask = mask_transform(self.opt, mask)
-                    #예진 : PIL Image를 다시 normalize하기 위해 numpy array로 변경
-                    # mask = np.array(mask)
                     #print("transform 후 mask.shape: ", mask.shape) #(1006, 1000)
-                    #mask = normalize(mask)
-                    # mask = crop_mask(mask)
+
                     masks = np.append(masks, mask)
         
                 else : #.png
-                    print("[*] extension is not in (dcm, png)")
+                    print("[*]EXTENSION ERROR : extension is not (dcm, png)")
                     pass
 
             background = np.zeros((H,W))
@@ -209,25 +200,26 @@ class DatasetFromFolder(data.Dataset):
             
             #자연 : cross entropy loss 일때, target value : 0 <= target[] <= class-1
             masks = masks.argmax(axis = 0)
-            
-            #train dataset 에만 transform 반영
-            #input_img = self.img_transform(input_img)
-            #masks = self.mask_transform(masks)
         
         else: #test
             img_list_path = os.path.join(self.test_dir, self.img_list[idx])
+
             if '.dcm' in img_list_path : 
-                #input_img : 0-1 histogram equalization 한 후 
-                input_img = dicom2png(self.opt, os.path.join(img_list_path, img))
-                # input_img = fake_dcm2png(img_list_path)
+                input_img = dicom2png(self.opt, os.path.join(img_list_path))
+
+                # crop & resize    
                 input_img = img_transform(self.opt, input_img)
+                #0-1 normalize and change dtype float64 -> float16
                 input_img = normalize(input_img)
                 H, W = input_img.shape
                 input_img = input_img.reshape(1, H, W)
 
-            masks = np.array([])
+                img_size = np.append(img_size, (H,W))
 
-        return input_img, masks, img_list_path
+        img_size = img_size.reshape((-1,2))
+
+
+        return input_img, masks, img_list_path, img_size
 
     def __len__(self):
         return len(self.img_list)
