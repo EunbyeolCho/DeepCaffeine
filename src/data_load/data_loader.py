@@ -26,7 +26,7 @@ def dicom2png(opt, dcm_pth):
     dc = pydicom.dcmread(dcm_pth)
     dc_arr = np.array(dc.pixel_array) #uint16
     #dc_arr = dc_arr.astype(np.int16)
-    print("dc_arr.dtype: ", dc_arr.dtype)
+    #print("dc_arr.dtype: ", dc_arr.dtype)
 
     if opt.histo_equal:
         """자연
