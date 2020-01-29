@@ -77,7 +77,7 @@ def inference(opt):
 
       maskDir = opt.output_dir
 
-      for b in range(opt.batch_size):
+      for b in range(len(filepath)):
         #결과를 /data/ouput에 저장
         case_id = os.path.basename(filepath[b])[:-4]
         batch_img = out[b, :, :, :]
