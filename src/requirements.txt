@@ -2,4 +2,6 @@ pip==19.3
 opencv-python
 Pydicom
 matplotlib
+future
 Pillow
+tensorboardX

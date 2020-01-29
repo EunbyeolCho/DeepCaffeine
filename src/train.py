@@ -10,6 +10,8 @@ from models import unet
 import torch.nn as nn
 import copy
 from utils.saver import save_checkpoint
+from tensorboardX import SummaryWriter
+
 
 
 def trainer(opt, model, optimizer, data_loader, loss_criterion):
@@ -88,7 +90,7 @@ if __name__ == "__main__":
 
   log_file = os.path.join(opt.log_dir, '%s_log.csv'%(opt.model))
   
-  if opt.model == 'unet' :
+  if opt.model == 'unet':
 
     net = unet.UNet(opt.num_class + 1) 
     
@@ -118,12 +120,16 @@ if __name__ == "__main__":
   optimizer = torch.optim.Adam(net.parameters(), lr = opt.lr, betas = (opt.b1, opt.b2))
 
   best_loss = 1000.0
-  
+
+  writer = SummaryWriter(log_dir = opt.log_dir)
   for epoch in range(opt.n_epochs):
     opt.epoch_num = epoch
     train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = loss_criterion)
     valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = loss_criterion)
-  
+
+    writer.add_scalar('Loss/train', train_loss, epoch)
+    writer.add_scalar('Loss/valid', valid_loss, epoch)
+
     if not opt.save_best:
       save_checkpoint(opt, net, epoch, valid_loss)
 
@@ -136,3 +142,4 @@ if __name__ == "__main__":
   if opt.save_best:
     save_checkpoint(opt, best_model_wts, epoch, valid_loss)
 
+writer.close()
