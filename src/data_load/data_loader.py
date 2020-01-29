@@ -8,8 +8,8 @@ import torch.utils.data as data
 from torchvision.transforms import Compose, ToTensor, Resize, Normalize, RandomHorizontalFlip, TenCrop
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
-# import sys
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../options')))
+#import sys
+#    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../options')))
 from options import args
 
 #from skimage.external.tifffile import imsave, imread, imshow
@@ -24,9 +24,9 @@ def dicom2png(opt, dcm_pth):
 #reference https://opencv-python.readthedocs.io/en/latest/doc/20.imageHistogramEqualization/imageHistogramEqualization.html
     
     dc = pydicom.dcmread(dcm_pth)
-    dc_arr = np.array(dc.pixel_array)
-    dc_arr = dc_arr.astype(np.int16)
-    # print(dc_arr.dtype)
+    dc_arr = np.array(dc.pixel_array) #uint16
+    #dc_arr = dc_arr.astype(np.int16)
+    print("dc_arr.dtype: ", dc_arr.dtype)
 
     if opt.histo_equal:
         """자연
@@ -34,9 +34,10 @@ def dicom2png(opt, dcm_pth):
         -1024~2000 -> -1000~400만 보고싶어 -> 0-255
         """
 
-        MIN_BOUND = dc_arr.min()
+        MIN_BOUND = dc_arr.min() #uint16
         MAX_BOUND = dc_arr.max()
 
+        #float64  <-- uint16 :overflow 발생
         dc_arr = 255.0 * (dc_arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
         dc_arr[dc_arr>255.0] = 255.0
         dc_arr[dc_arr<0.0] = 0.0
@@ -60,10 +61,13 @@ def normalize(img):
 
     max = img.max()
     min = img.min()
-    img = (img-min)/(max-min)
-    # print(img.dtype)
+    if (max==min):
+        img = img-min
+    else:
+        img = (img-min)/(max-min)
+    #print(img.dtype)
     img = img.astype(np.float16)
-    # print(img.dtype)
+    #print(img.dtype)
     return img
 
 
@@ -100,7 +104,7 @@ def img_transform(opt, img):
     return resize_img
 
 
-""" CHECK DCM
+'''
 if __name__ == "__main__":
 
     opt= args
@@ -109,7 +113,7 @@ if __name__ == "__main__":
     imgs = os.listdir(path)
     img = os.path.join(path, imgs[0])
 
-    dcm = dicom2png(img)
+    dcm = dicom2png(opt, img)
 
     # dcm = cv2.normalize(dcm, dcm, 0, 1, cv2.NORM_MINMAX)
     print(dcm.shape)
@@ -119,7 +123,7 @@ if __name__ == "__main__":
     # dcm = compose(dcm)
     # dcm = np.array(dcm)
 
-    # dcm = normalize(dcm)
+    dcm = normalize(dcm)
     dcm = dcm.astype(np.float32)
     dcm_name = os.path.join(path, 'before_aug.tiff')
 
@@ -132,7 +136,7 @@ if __name__ == "__main__":
     # trans = normalize(trans)
     trans_name = os.path.join(path, 'after_aug.tiff')
     imsave(trans_name, trans)
-"""
+'''
 
 class DatasetFromFolder(data.Dataset):
     def __init__(self, opt):

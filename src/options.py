@@ -33,7 +33,6 @@ volume_dir = './data/volume'
 weight_dir = './data/volume/logs' + '_final.hdf5'
 '''
 
-
 parser = argparse.ArgumentParser(description = 'HeLP Challenge 2019 Cardiovascular')
 
 parser.add_argument('--train_dir', type = str, default = train_dir)
@@ -70,7 +69,7 @@ parser.add_argument('--b2', type = float, default = 0.999,
 # data loader argument
 parser.add_argument('--img_size', type = int, default = 512,
                     help = '256, 512, ...')
-parser.add_argument('--histo_equal', type = bool, default=True)
+parser.add_argument('--histo_equal', type = bool, default=False)
 parser.add_argument('--augmentation', type = bool, default = False,
                     help = 'augmentation (flip)augmentation fro training set')
 parser.add_argument('--num_class', type = int, default = 8)
