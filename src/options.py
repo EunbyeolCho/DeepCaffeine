@@ -10,28 +10,21 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), './data'
 
 
 
-# data_dir = 'D:/data/cardiovascular_sample'
-# train_dir = 'D:/data/cardiovascular_sample/train'
-# test_dir = 'D:/data/cardiovascular_sample/test'
-# log_dir = 'D:/data/cardiovascular_sample/logs'
-# output_dir = 'D:/data/cardiovascular_sample/output'
-# volume_dir = 'D:/data/cardiovascular_sample/volume'
-
 train_dir = '/data/train'
 log_dir = '/data/volume/logs'
 test_dir = '/data/test'
 output_dir = '/data/output'
 volume_dir = '/data/volume'
 weight_dir = '/data/volume/logs' + ID + '_final.hdf5'
-'''
+
 #예진 local_test
-train_dir = './data/train'
-log_dir = './data/volume/logs'
-test_dir = './data/test'
-output_dir = './data/output'
-volume_dir = './data/volume'
-weight_dir = './data/volume/logs' + '_final.hdf5'
-'''
+# train_dir = './data/train'
+# log_dir = './data/volume/logs'
+# test_dir = './data/test'
+# output_dir = './data/output'
+# volume_dir = './data/volume'
+# weight_dir = './data/volume/logs' + '_final.hdf5'
+
 
 parser = argparse.ArgumentParser(description = 'HeLP Challenge 2019 Cardiovascular')
 
@@ -55,21 +48,22 @@ parser.add_argument('--mode', type = str, default = 'train',
                     help = 'train, test')
 parser.add_argument('--model', type = str, default = 'unet',
                     help = 'unet, maskRcnn, deeplabv3p')
-parser.add_argument('--n_epochs', type = int, default = 500,
+parser.add_argument('--n_epochs', type = int, default = 150,
                     help = 'max epochs')
 parser.add_argument('--epoch_num', type = int, default = 0,
                     help = 'real time epoch')
 parser.add_argument('--lr', type = float, default = 1e-4)
-parser.add_argument("--batch_size", type = int, default = 16)
+parser.add_argument("--batch_size", type = int, default = 34)
 parser.add_argument('--b1', type = float, default = 0.9,
                     help = 'Adam : decay of first order momentum of gradient')
 parser.add_argument('--b2', type = float, default = 0.999,
                     help = 'Adam : decay of second order momentum of gradient')
+parser.add_argument('--loss_weight', type = float, default = 100)
 
 # data loader argument
 parser.add_argument('--img_size', type = int, default = 512,
                     help = '256, 512, ...')
-parser.add_argument('--histo_equal', type = bool, default=False)
+parser.add_argument('--histo_equal', type = bool, default=True)
 parser.add_argument('--augmentation', type = bool, default = False,
                     help = 'augmentation (flip)augmentation fro training set')
 parser.add_argument('--num_class', type = int, default = 8)

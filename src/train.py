@@ -94,7 +94,9 @@ if __name__ == "__main__":
 
     net = unet.UNet(opt.num_class + 1) 
     
-  loss_criterion = nn.CrossEntropyLoss()
+  w = opt.loss_weight
+  loss_weight = torch.FloatTensor([1, w , w, w, w, w, w, w, w])
+  loss_criterion = nn.CrossEntropyLoss(weight = loss_weight)
   print(net)
   
   

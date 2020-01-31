@@ -40,7 +40,7 @@ def inference(opt):
   
   #/data/volume/ID에서 저장된 model 중 best model load
   _, net = load_model(opt, opt.weight_dir)
-  loss_criterion = nn.CrossEntropyLoss()
+  # loss_criterion = nn.CrossEntropyLoss()
 
   if opt.use_cuda and torch.cuda.is_available():
     opt.use_cuda = True
@@ -56,7 +56,7 @@ def inference(opt):
   
   if opt.use_cuda :
       net = net.to(opt.device)
-      loss_criterion = loss_criterion.to(opt.device)
+      # loss_criterion = loss_criterion.to(opt.device)
   
   #test하기
   with torch.no_grad():
