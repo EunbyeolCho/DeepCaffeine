@@ -63,7 +63,7 @@ parser.add_argument('--loss', type = str, default = 'wce',
                     help = 'bce, ce, wce, focal')
 
 # data loader argument
-parser.add_argument('--img_size', type = int, default = 512,
+parser.add_argument('--img_size', type = int, default = 256,
                     help = '256, 512, ...')
 parser.add_argument('--histo_equal', type = bool, default=True)
 parser.add_argument('--augmentation', type = bool, default = False,
