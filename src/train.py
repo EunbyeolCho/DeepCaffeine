@@ -10,8 +10,9 @@ from models import unet
 import torch.nn as nn
 import copy
 from utils.saver import save_checkpoint
-from tensorboardX import SummaryWriter
-from utils.matrics import Calc
+# from tensorboardX import SummaryWriter
+import utils.matrics as MATRICS
+import numpy as np
 
 
 def set_loss(opt):
@@ -20,7 +21,7 @@ def set_loss(opt):
     loss_weight = torch.FloatTensor([1, w , w, w, w, w, w, w, w])
     loss_criterion = nn.CrossEntropyLoss(weight = loss_weight)
   elif opt.loss =='dice':
-    loss_criterion = Calc.Get_total_DSC_loss()
+    loss_criterion = MATRICS.DCE_LOSS()
   elif opt.loss == 'ce':
     loss_criterion = nn.CrossEntropyLoss()
   else : 
@@ -47,7 +48,15 @@ def trainer(opt, model, optimizer, data_loader, loss_criterion):
 
     out = model(img)
 
-    loss = loss_criterion(out, masks)
+    if opt.loss == 'dice' :
+      loss = loss_criterion.Get_total_DSC_loss(out, masks)
+      # loss = torch.from_numpy(np.asarray(loss)).float().to('cuda')
+      loss = loss.to('cuda')
+      # loss.requires_grad = True
+    else :
+      loss_criterion = loss_criterion.to(opt.device)
+      loss = loss_criterion(out, masks)
+    # print(loss)
     loss.backward()
     optimizer.step()
 
@@ -80,7 +89,10 @@ def evaluator(opt, model, data_loader, loss_criterion):
 
       out = model(img)
 
-      loss = loss_criterion(out, masks)
+      if opt.loss == 'dice' :
+        loss = loss_criterion.Get_total_DSC_loss(out, masks)
+      else :
+        loss = loss_criterion(out, masks)
 
       total_loss +=loss.item()
   
@@ -128,21 +140,21 @@ if __name__ == "__main__":
 
   if opt.use_cuda :
       net = net.to(opt.device)
-      loss_criterion = loss_criterion.to(opt.device)
+      # loss_criterion = loss_criterion.to(opt.device)
   
   print('===> Setting Optimizer')
   optimizer = torch.optim.Adam(net.parameters(), lr = opt.lr, betas = (opt.b1, opt.b2))
 
   best_loss = 1000.0
 
-  writer = SummaryWriter(log_dir = opt.log_dir)
+  # writer = SummaryWriter(log_dir = opt.log_dir)
   for epoch in range(opt.n_epochs):
     opt.epoch_num = epoch
     train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = loss_criterion)
     valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = loss_criterion)
 
-    writer.add_scalar('Loss/train', train_loss, epoch)
-    writer.add_scalar('Loss/valid', valid_loss, epoch)
+    # writer.add_scalar('Loss/train', train_loss, epoch)
+    # writer.add_scalar('Loss/valid', valid_loss, epoch)
 
     if not opt.save_best:
       save_checkpoint(opt, net, epoch, valid_loss)
@@ -156,4 +168,4 @@ if __name__ == "__main__":
   if opt.save_best:
     save_checkpoint(opt, best_model_wts, epoch, valid_loss)
 
-writer.close()
+# writer.close()

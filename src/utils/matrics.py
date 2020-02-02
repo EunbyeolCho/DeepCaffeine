@@ -17,10 +17,76 @@ import cv2
 import os
 import colorsys
 import random
-import SimpleITK as sitk
+# import SimpleITK as sitk
 from options import args
+import torch
 
 opt = args
+
+
+class DCE_LOSS():
+
+    def Get_DSC_loss(self, pred_m, gt_m):
+        """Returns Dice Similarity Coefficient for ground truth and predicted masks."""
+        
+        pred_m = pred_m.to(device = 'cpu', dtype=torch.float)
+        gt_m = gt_m.to(device = 'cpu',dtype = torch.float)
+        pred_m_flat = pred_m.contiguous().view(-1)
+        gt_m_flat = gt_m.contiguous().view(-1)
+
+        intersection = (pred_m_flat*gt_m_flat).sum()
+
+        A_sum = torch.sum(pred_m_flat*pred_m_flat)
+        B_sum = torch.sum(gt_m_flat*gt_m_flat)
+
+        dsc = (2. * intersection + 1.) / (A_sum + B_sum + 1.)
+
+        return 1- dsc 
+
+    def fake_Get_DSC_loss(self, pred_m, gt_m):
+        """Returns Dice Similarity Coefficient for ground truth and predicted masks."""
+        
+        if pred_m is None:
+            """Absence of prediction :class"""
+            return 0
+
+        # if not np.any(pred_m):
+        #     """Empty mask"""
+        #     return 1
+        
+        gt_m = gt_m.cpu()
+        pred_m = pred_m.cpu()
+        gt_m = gt_m.detach().numpy()
+        pred_m = pred_m.detach().numpy()
+
+        intersection = np.logical_and(gt_m, pred_m)  
+
+        true_sum= gt_m[:,:].sum()
+        pred_sum= pred_m[:,:].sum()
+        intersection_sum = intersection[:,:].sum()
+
+        dsc = (2 * intersection_sum + 1.) / (true_sum + pred_sum + 1.)
+
+        return 1- dsc 
+
+    def Get_total_DSC_loss(self, out, gt):
+        total_DSC_loss = 0
+        count = 0
+        for batch_num, masks in enumerate(gt):
+            outs_per_batch = out[batch_num, :, :, :] # mask shape, out per batch shape (9,512,512)
+            
+            for i, mask in enumerate(masks) : 
+
+                each_class_mask = mask
+                each_class_out = outs_per_batch[i]
+
+                total_DSC_loss += self.Get_DSC_loss(each_class_out, each_class_mask)
+                count += 1
+        
+        return total_DSC_loss/count
+    
+    # def to(self, )
+
 
 class Calc(object):
     
@@ -45,43 +111,6 @@ class Calc(object):
 
         return dsc 
    
-    ### train dice loss
-    def Get_DSC_loss(self, pred_m, gt_m):
-        """Returns Dice Similarity Coefficient for ground truth and predicted masks."""
-        
-        if pred_m is None:
-            """Absence of prediction :class"""
-            return 0
-        if not np.any(pred_m):
-            """Empty mask"""
-            return 0
-        
-        intersection = np.logical_and(gt_m, pred_m)  
-
-        true_sum= gt_m[:,:].sum()
-        pred_sum= pred_m[:,:].sum()
-        intersection_sum = intersection[:,:].sum()
-
-        dsc = (2 * intersection_sum + 1.) / (true_sum + pred_sum + 1.)
-
-        return 1- dsc 
-
-    def Get_total_DSC_loss(self, out, gt):
-        total_DSC_loss = 0
-        count = 0
-        for batch_num, masks in enumerate(gt):
-            outs_per_batch = out[batch_num, :, :, :] # mask shape, out per batch shape (9,512,512)
-            
-            for i, mask in enumerate(masks) : 
-
-                each_class_mask = mask
-                each_class_out = outs_per_batch[i]
-
-                total_DSC_loss += Get_DSC_loss(each_class_out, each_class_mask)
-                count += 1
-        
-        return total_DSC_loss / count
-
             
     def Get_BBox(self, mask_binary, margin = 0):
         """Returns bbox: [x1,y1,x2,y2]

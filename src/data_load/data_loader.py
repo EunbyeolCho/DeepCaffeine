@@ -225,7 +225,7 @@ class DatasetFromFolder(data.Dataset):
             
             #자연 : cross entropy loss 일때, target value : 0 <= target[] <= class-1
             ## ce일때만 
-            if loss = "ce":
+            if not self.opt.loss == "dice":
                 masks = masks.argmax(axis = 0)
             
         
