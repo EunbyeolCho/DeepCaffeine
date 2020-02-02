@@ -224,7 +224,10 @@ class DatasetFromFolder(data.Dataset):
             masks = masks.reshape(self.opt.num_class + 1, self.opt.img_size, self.opt.img_size )
             
             #자연 : cross entropy loss 일때, target value : 0 <= target[] <= class-1
-            masks = masks.argmax(axis = 0)
+            ## ce일때만 
+            if loss = "ce":
+                masks = masks.argmax(axis = 0)
+            
         
         else: #test
             img_list_path = os.path.join(self.test_dir, self.img_list[idx])

@@ -59,8 +59,8 @@ parser.add_argument('--b1', type = float, default = 0.9,
 parser.add_argument('--b2', type = float, default = 0.999,
                     help = 'Adam : decay of second order momentum of gradient')
 parser.add_argument('--loss_weight', type = float, default = 100)
-parser.add_argument('--loss', type = str, default = 'wce',
-                    help = 'bce, ce, wce, focal')
+parser.add_argument('--loss', type = str, default = 'dice',
+                    help = 'bce, ce, wce, focal, dice')
 
 # data loader argument
 parser.add_argument('--img_size', type = int, default = 256,

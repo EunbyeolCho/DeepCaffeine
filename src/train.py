@@ -11,17 +11,20 @@ import torch.nn as nn
 import copy
 from utils.saver import save_checkpoint
 from tensorboardX import SummaryWriter
+from utils.matrics import Calc
 
 
 def set_loss(opt):
   if opt.loss == 'wce':
     w = opt.loss_weight
-    loss_weight = torch.FloatTensor([1, w, w, w, w, w, w, w, w])
-    loss_criterion = nn.CrossEntropyLoss(weight = loss_weight, size_average = True)
+    loss_weight = torch.FloatTensor([1, w , w, w, w, w, w, w, w])
+    loss_criterion = nn.CrossEntropyLoss(weight = loss_weight)
+  elif opt.loss =='dice':
+    loss_criterion = Calc.Get_total_DSC_loss()
   elif opt.loss == 'ce':
     loss_criterion = nn.CrossEntropyLoss()
   else : 
-    ValueError('set the loss function (wce, ce)')
+    ValueError('set the loss function (wce, ce, dice)')
 
   return loss_criterion
 
