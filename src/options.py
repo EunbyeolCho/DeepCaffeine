@@ -2,28 +2,28 @@ import argparse
 import os
 import torch
 
-# ID = os.environ['ID']
-# ID = str(ID)
+ID = os.environ['ID']
+ID = str(ID)
 
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), './data')))
 
 
 
-# train_dir = '/data/train'
-# log_dir = '/data/volume/logs'
-# test_dir = '/data/test'
-# output_dir = '/data/output'
-# volume_dir = '/data/volume'
-# weight_dir = '/data/volume/logs' + ID + '_final.hdf5'
+train_dir = '/data/train'
+log_dir = '/data/volume/logs'
+test_dir = '/data/test'
+output_dir = '/data/output'
+volume_dir = '/data/volume'
+weight_dir = '/data/volume/logs' + ID + '_final.hdf5'
 
 #예진 local_test
-train_dir = './data/train'
-log_dir = './data/volume/logs'
-test_dir = './data/test'
-output_dir = './data/output'
-volume_dir = './data/volume'
-weight_dir = './data/volume/logs' + '_final.hdf5'
+# train_dir = './data/train'
+# log_dir = './data/volume/logs'
+# test_dir = './data/test'
+# output_dir = './data/output'
+# volume_dir = './data/volume'
+# weight_dir = './data/volume/logs' + '_final.hdf5'
 
 
 parser = argparse.ArgumentParser(description = 'HeLP Challenge 2019 Cardiovascular')
@@ -53,7 +53,7 @@ parser.add_argument('--n_epochs', type = int, default = 100,
 parser.add_argument('--epoch_num', type = int, default = 0,
                     help = 'real time epoch')
 parser.add_argument('--lr', type = float, default = 1e-4)
-parser.add_argument("--batch_size", type = int, default = 34)
+parser.add_argument("--batch_size", type = int, default = 16)
 parser.add_argument('--b1', type = float, default = 0.9,
                     help = 'Adam : decay of first order momentum of gradient')
 parser.add_argument('--b2', type = float, default = 0.999,
