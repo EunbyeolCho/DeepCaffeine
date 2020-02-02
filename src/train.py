@@ -10,14 +10,14 @@ from models import unet
 import torch.nn as nn
 import copy
 from utils.saver import save_checkpoint
-from tensorboardX import SummaryWriter
+# from tensorboardX import SummaryWriter
 
 
 def set_loss(opt):
   if opt.loss == 'wce':
     w = opt.loss_weight
-    loss_weight = torch.FloatTensor([1, w , w, w, w, w, w, w, w])
-    loss_criterion = nn.CrossEntropyLoss(weight = loss_weight)
+    loss_weight = torch.FloatTensor([1, w, w, w, w, w, w, w, w])
+    loss_criterion = nn.CrossEntropyLoss(weight = loss_weight, size_average = True)
   elif opt.loss == 'ce':
     loss_criterion = nn.CrossEntropyLoss()
   else : 
@@ -132,14 +132,14 @@ if __name__ == "__main__":
 
   best_loss = 1000.0
 
-  writer = SummaryWriter(log_dir = opt.log_dir)
+  # writer = SummaryWriter(log_dir = opt.log_dir)
   for epoch in range(opt.n_epochs):
     opt.epoch_num = epoch
     train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = loss_criterion)
     valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = loss_criterion)
 
-    writer.add_scalar('Loss/train', train_loss, epoch)
-    writer.add_scalar('Loss/valid', valid_loss, epoch)
+    # writer.add_scalar('Loss/train', train_loss, epoch)
+    # writer.add_scalar('Loss/valid', valid_loss, epoch)
 
     if not opt.save_best:
       save_checkpoint(opt, net, epoch, valid_loss)
@@ -153,4 +153,4 @@ if __name__ == "__main__":
   if opt.save_best:
     save_checkpoint(opt, best_model_wts, epoch, valid_loss)
 
-writer.close()
+# writer.close()

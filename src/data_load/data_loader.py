@@ -12,7 +12,7 @@ from torchvision.transforms import transforms
 #    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../options')))
 from options import args
 
-#from skimage.external.tifffile import imsave, imread, imshow
+# from skimage.external.tifffile import imsave, imread, imshow
 
 #need to add center crop!!
 
@@ -71,37 +71,58 @@ def normalize(img):
     return img
 
 
-def mask_transform(opt, mask):
-    # h,w 중 작은 사이즈에 맞춰 crop 후 resize
+# def mask_transform(opt, mask):
+#     # h,w 중 작은 사이즈에 맞춰 crop 후 resize
+#     H, W = mask.shape
+
+#     if(H > W):
+#         diff = H-W
+#         crop_mask = mask[diff:H, 0:W]
+#     else:
+#         diff = W-H
+#         crop_mask = mask[0:H, diff:W]
+
+#     resize_mask = cv2.resize(crop_mask, (opt.img_size, opt.img_size), interpolation=cv2.INTER_CUBIC)
+
+#     return resize_mask
+
+def mask_transform(opt, mask) :
     H, W = mask.shape
+    diff_h = round((H-2048)*0.8)
+    diff_w = round((W-2048)*0.5)
 
-    if(H > W):
-        diff = H-W
-        crop_mask = mask[diff:H, 0:W]
-    else:
-        diff = W-H
-        crop_mask = mask[0:H, diff:W]
-
-    resize_mask = cv2.resize(crop_mask, (opt.img_size, opt.img_size), interpolation=cv2.INTER_CUBIC)
+    crop_mask = mask[diff_h : diff_h + 2048, diff_w : diff_w + 2048]
+    resize_mask = cv2.resize(crop_mask, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
 
     return resize_mask
 
 
 def img_transform(opt, img):
-    # h,w 중 작은 사이즈에 맞춰 crop 후 resize
     H, W = img.shape
+    diff_h = round((H-2048) * 0.8)
+    diff_w = round((W-2048) * 0.5)
 
-    if(H > W):
-        diff = H-W
-        crop_img = img[diff:H, 0:W]
-    else:
-        diff = W-H
-        crop_img = img[0:H, diff:W]
-
-
+    crop_img = img[diff_h : diff_h + 2048, diff_w : diff_w + 2048]
     resize_img = cv2.resize(crop_img, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
 
     return resize_img
+
+
+# def img_transform(opt, img):
+#     # h,w 중 작은 사이즈에 맞춰 crop 후 resize
+#     H, W = img.shape
+
+#     if(H > W):
+#         diff = H-W
+#         crop_img = img[diff:H, 0:W]
+#     else:
+#         diff = W-H
+#         crop_img = img[0:H, diff:W]
+
+
+#     resize_img = cv2.resize(crop_img, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
+
+#     return resize_img
 
 
 '''
@@ -172,14 +193,14 @@ class DatasetFromFolder(data.Dataset):
                     input_img = dicom2png(self.opt, os.path.join(img_list_path, img))
                     #print("img.shape before transform: ", input_img.shape) #(3001, 2983)
 
+                    H, W = input_img.shape
                     # crop & resize
                     input_img = img_transform(self.opt, input_img)
                     
                     #0-1 normalize and change dtype float64 -> float16
                     input_img = normalize(input_img)
                     #print("transform 후 최종: img.shape: ", input_img.shape) #(512, 512)
-                    H, W = input_img.shape
-                    input_img = input_img.reshape(1, H, W)
+                    input_img = input_img.reshape(1, self.opt.img_size, self.opt.img_size)
 
                     img_size = np.append(img_size, (H,W))
 
@@ -197,10 +218,10 @@ class DatasetFromFolder(data.Dataset):
                     print("[*]EXTENSION ERROR : extension is not (dcm, png)")
                     pass
 
-            background = np.zeros((H,W))
+            background = np.zeros((self.opt.img_size,self.opt.img_size))
             #background  = 0th class
             masks = np.append(background, masks)
-            masks = masks.reshape(self.opt.num_class + 1, H, W )
+            masks = masks.reshape(self.opt.num_class + 1, self.opt.img_size, self.opt.img_size )
             
             #자연 : cross entropy loss 일때, target value : 0 <= target[] <= class-1
             masks = masks.argmax(axis = 0)
@@ -210,13 +231,13 @@ class DatasetFromFolder(data.Dataset):
 
             if '.dcm' in img_list_path : 
                 input_img = dicom2png(self.opt, os.path.join(img_list_path))
-
+                H, W = input_img.shape
                 # crop & resize    
                 input_img = img_transform(self.opt, input_img)
                 #0-1 normalize and change dtype float64 -> float16
                 input_img = normalize(input_img)
-                H, W = input_img.shape
-                input_img = input_img.reshape(1, H, W)
+
+                input_img = input_img.reshape(1, self.opt.img_size, self.opt.img_size)
 
                 img_size = np.append(img_size, (H,W))
 
