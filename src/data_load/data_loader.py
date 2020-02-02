@@ -48,7 +48,7 @@ def dicom2png(opt, dcm_pth):
         Histogram Equalization
         """
         #자연 : create a CLAHE(Contrast Limited Adaptive Histogram Equalization)
-        clahe = cv2.createCLAHE(clipLimit = 1.0, tileGridSize = (8,8))
+        clahe = cv2.createCLAHE(clipLimit = 2.0, tileGridSize = (16,16))
         dc_arr = clahe.apply(dc_arr)
     
         #그냥 histogram equalization

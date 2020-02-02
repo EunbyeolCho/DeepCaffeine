@@ -13,6 +13,17 @@ from utils.saver import save_checkpoint
 from tensorboardX import SummaryWriter
 
 
+def set_loss(opt):
+  if opt.loss == 'wce':
+    w = opt.loss_weight
+    loss_weight = torch.FloatTensor([1, w , w, w, w, w, w, w, w])
+    loss_criterion = nn.CrossEntropyLoss(weight = loss_weight)
+  elif opt.loss == 'ce':
+    loss_criterion = nn.CrossEntropyLoss()
+  else : 
+    ValueError('set the loss function (wce, ce)')
+
+  return loss_criterion
 
 def trainer(opt, model, optimizer, data_loader, loss_criterion):
 
@@ -58,7 +69,7 @@ def evaluator(opt, model, data_loader, loss_criterion):
     for i, batch in enumerate(data_loader) :
     
       img, masks = batch[0], batch[1]
-
+      
       if opt.use_cuda :
         img = img.to(opt.device, dtype = torch.float)
         masks = masks.to(opt.device, dtype = torch.long)
@@ -69,20 +80,20 @@ def evaluator(opt, model, data_loader, loss_criterion):
       loss = loss_criterion(out, masks)
 
       total_loss +=loss.item()
-
+  
   total_loss = total_loss/i
-
+  
   print("***\nValidation %.2fs => Epoch[%d/%d] :: Loss : %.10f\n"%(time.time()-start_time, opt.epoch_num, opt.n_epochs, total_loss)) 
-
+  
   return total_loss
-
-
-
+  
+  
+  
 if __name__ == "__main__":
-
+  
   opt = args
   print(opt)
-
+  
   train_data_loader, valid_data_loader = get_data_loader(opt)
   
   if not os.path.exists(opt.log_dir) :
@@ -91,18 +102,16 @@ if __name__ == "__main__":
   log_file = os.path.join(opt.log_dir, '%s_log.csv'%(opt.model))
   
   if opt.model == 'unet':
-
     net = unet.UNet(opt.num_class + 1) 
-    
-  w = opt.loss_weight
-  loss_weight = torch.FloatTensor([1, w , w, w, w, w, w, w, w])
-  loss_criterion = nn.CrossEntropyLoss(weight = loss_weight)
+  
+  loss_criterion = set_loss(opt)
+
   print(net)
   
   
   print('===> Setting GPU')
   print("CUDA Available", torch.cuda.is_available())
-
+  
   if opt.use_cuda and torch.cuda.is_available():
     opt.use_cuda = True
     opt.device = 'cuda'

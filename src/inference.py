@@ -13,11 +13,6 @@ import cv2
 import numpy as np
 from utils.resize_output import resize_output
 
-'''
-#예진
-의학영상처리 srcnn.py의 test_model 참고
-미완성: 1)네트워크에서 나온 결과를 mask로 저장 2)traget과 비교하여 평가지표 구하는 부분 
-'''
 
 def class_name(num):
   cn = ['_background', 'Aortic Knob', 'Carina', 'DAO', 'LAA', 'Lt Lower CB', 'Pulmonary Conus', 'Rt Lower CB', 'Rt Upper CB']
@@ -40,7 +35,6 @@ def inference(opt):
   
   #/data/volume/ID에서 저장된 model 중 best model load
   _, net = load_model(opt, opt.weight_dir)
-  # loss_criterion = nn.CrossEntropyLoss()
 
   if opt.use_cuda and torch.cuda.is_available():
     opt.use_cuda = True
@@ -56,7 +50,6 @@ def inference(opt):
   
   if opt.use_cuda :
       net = net.to(opt.device)
-      # loss_criterion = loss_criterion.to(opt.device)
   
   #test하기
   with torch.no_grad():
