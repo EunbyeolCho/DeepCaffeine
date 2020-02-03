@@ -48,18 +48,18 @@ parser.add_argument('--mode', type = str, default = 'train',
                     help = 'train, test')
 parser.add_argument('--model', type = str, default = 'unet',
                     help = 'unet, maskRcnn, deeplabv3p')
-parser.add_argument('--n_epochs', type = int, default = 100,
+parser.add_argument('--n_epochs', type = int, default = 50,
                     help = 'max epochs')
 parser.add_argument('--epoch_num', type = int, default = 0,
                     help = 'real time epoch')
 parser.add_argument('--lr', type = float, default = 1e-4)
-parser.add_argument("--batch_size", type = int, default = 16)
+parser.add_argument("--batch_size", type = int, default = 32)
 parser.add_argument('--b1', type = float, default = 0.9,
                     help = 'Adam : decay of first order momentum of gradient')
 parser.add_argument('--b2', type = float, default = 0.999,
                     help = 'Adam : decay of second order momentum of gradient')
 parser.add_argument('--loss_weight', type = float, default = 20)
-parser.add_argument('--loss', type = str, default = 'dice',
+parser.add_argument('--loss', type = str, default = 'wce',
                     help = 'bce, ce, wce, focal, dice')
 
 # data loader argument
