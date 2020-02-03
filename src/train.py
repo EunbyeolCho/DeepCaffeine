@@ -13,6 +13,7 @@ from utils.saver import save_checkpoint
 from tensorboardX import SummaryWriter
 import utils.matrics as MATRICS
 import numpy as np
+from torch.optim import lr_scheduler
 
 
 def set_loss(opt):
@@ -25,7 +26,7 @@ def set_loss(opt):
   elif opt.loss == 'ce':
     loss_criterion = nn.CrossEntropyLoss()
   else : 
-    ValueError('set the loss function (wce, ce, dice)')
+    raise ValueError('set the loss function (wce, ce, dice)')
 
   return loss_criterion
 
@@ -146,6 +147,7 @@ if __name__ == "__main__":
   
   print('===> Setting Optimizer')
   optimizer = torch.optim.Adam(net.parameters(), lr = opt.lr, betas = (opt.b1, opt.b2))
+  #schedular = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=1, min_lr= 2e-5, verbose= True)
 
   best_loss = 1000.0
 
@@ -154,9 +156,9 @@ if __name__ == "__main__":
     opt.epoch_num = epoch
     train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = loss_criterion)
     valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = loss_criterion)
-
-    writer.add_scalar('DLoss/train', train_loss, epoch)
-    writer.add_scalar('DLoss/valid', valid_loss, epoch)
+    
+    writer.add_scalar('DICELoss/train', train_loss, epoch)
+    writer.add_scalar('DICELoss/valid', valid_loss, epoch)
 
     if not opt.save_best:
       save_checkpoint(opt, net, epoch, valid_loss)

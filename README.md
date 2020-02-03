@@ -23,12 +23,28 @@ Sun: 회의
 
 주차별 진행상황
 ------------
-1주차: 2020년 1월 5일 
-* 대략적인 Model 선정 
+1주차: 2020년 1월 5일
+* 대략적인 Model 선정
 * Docker 설치
+
+2주차: 2020년 1월 12일
+* Unet 선정 후 디버깅 하며 모델 완성
+
+...
+
+5주차: 2020년 2월 2일
+* Loss function, Preprocessing에 집중하여 코딩
+
 
 TODO
 -----
 1주차: Unet Baseline 코드 짜기
 
+...
 
+5주차:
+* Tensorboard에 Accuracy도 출력하도록
+* 성능개선을 위한 Image Preprocessing
+* 속도개선 생각해보기
+* 짧은 시간이 남았지만 다른 모델 돌릴지 여부 검토
+* Learning rate Decay
