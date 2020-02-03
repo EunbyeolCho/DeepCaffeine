@@ -1,4 +1,5 @@
 import cv2
+from PIL import Image
 import os, glob
 import pydicom
 import numpy as np
@@ -7,218 +8,273 @@ import torch.utils.data as data
 from torchvision.transforms import Compose, ToTensor, Resize, Normalize, RandomHorizontalFlip, TenCrop
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
-#from matplotlib import pyplot as plt
 # import sys
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../options')))
-# from options import args
-#need to add center crop!!
-# 은별 : 요거 누가 쓴거지? center crop 추가하기는 했는데 사이즈가 애매하군
-# 은별 : 흠 ... tencrop추가할까? 일단은 center crop해놨어용
-
-#자연 : flip 좋은 생각 아닌거 같아, 우리가 detect하는것이 오른쪽/왼쪽이 정해져 있어서 편파적으로 학습하게 두는게 더 좋을것같은데 어때?
-#은별 : 직관적으로 무슨 뜻인지 알겠는데, flip하는 일이 어려운일이 아니니까 직접해보고 결과를 비교하는게 가장 확실할 것 같아!
+#    sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../options')))
+from options import args
 
 
-def dicom2png(dcm_pth):
+# from skimage.external.tifffile import imsave, imread, imshow
 
-#reference https://www.kaggle.com/gzuidhof/full-preprocessing-tutorial
-#reference https://blog.kitware.com/dicom-rescale-intercept-rescale-slope-and-itk/
-#reference https://opencv-python.readthedocs.io/en/latest/doc/20.imageHistogramEqualization/imageHistogramEqualization.html
+# need to add center crop!!
+
+
+def dicom2png(opt, dcm_pth):
+    # reference https://www.kaggle.com/gzuidhof/full-preprocessing-tutorial
+    # reference https://blog.kitware.com/dicom-rescale-intercept-rescale-slope-and-itk/
+    # reference https://opencv-python.readthedocs.io/en/latest/doc/20.imageHistogramEqualization/imageHistogramEqualization.html
 
     dc = pydicom.dcmread(dcm_pth)
-    dc_arr = dc.pixel_array
+    dc_arr = np.array(dc.pixel_array)  # uint16
+    # dc_arr = dc_arr.astype(np.int16)
+    # print("dc_arr.dtype: ", dc_arr.dtype)
+
+    if opt.histo_equal:
+        """자연
+        Normalization-1(0-255)
+        -1024~2000 -> -1000~400만 보고싶어 -> 0-255
+        """
+
+        MIN_BOUND = dc_arr.min()  # uint16
+        MAX_BOUND = dc_arr.max()
+
+        # float64  <-- uint16 :overflow 발생
+        dc_arr = 255.0 * (dc_arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
+        dc_arr[dc_arr > 255.0] = 255.0
+        dc_arr[dc_arr < 0.0] = 0.0
+        # cv2 clahe 사용하기 위해 uint8로 바꿈
+        dc_arr = np.uint8(dc_arr)
+
+        """자연
+        Histogram Equalization
+        """
+        # 자연 : create a CLAHE(Contrast Limited Adaptive Histogram Equalization)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(16, 16))
+        dc_arr = clahe.apply(dc_arr)
+
+        # 그냥 histogram equalization
+        # dc_arr = cv2.equalizeHist(dc_arr)
+
+    return dc_arr
 
 
-    """자연
-    HU(Hounsfield Units)에 맞게 pixel 값 조정
-    """
-    dc_arr = dc_arr.astype(np.int16)
-    dc_arr[dc_arr == -2000] = 0
-    #dc_arr = cv2.equalizeHist(dc_arr)
-
-
-    intercept = dc.RescaleIntercept
-    slope = dc.RescaleSlope
-
-    if slope != 1:
-        dc_arr = slope * dc_arr.astype(np.float64)
-        dc_arr = dc_arr.astype(np.int16)
-
-    dc_arr += np.int16(intercept)
-
-    MIN_BOUND = -1000.0
-    MAX_BOUND = 400.0
-
-    dc_arr = 255.0 * (dc_arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
-    dc_arr[dc_arr > 255.0] = 255.0
-    dc_arr[dc_arr < 0.0] = 0.0
-    H, W = dc_arr.shape
-    dc_arr = dc_arr.reshape(H, W, 1)
-    dc_arr = np.uint8(dc_arr)
-
-    # 자연 : create a CLAHE(Contrast Limited Adaptive Histogram Equalization)
-    clahe = cv2.createCLAHE(clipLimit = 1.0, tileGridSize = (8,8))
-    nor_dc_arr = clahe.apply(dc_arr)
-    nor_dc_arr = nor_dc_arr.reshape(1, H, W)
-
-    # nor_dc_arr = np.array(nor_dc_arr/255.0, dtype = np.float)
-    return nor_dc_arr
-
-
-
-
-def mask_transform(opt):
-    if opt.augmentation:
-        compose = Compose([
-            # transforms.Scale(opt.img_size),
-            transforms.CenterCrop(224),
-            #RandomHorizontalFlip(),
-            # transforms.ToTensor(),
-        ])
-    else:
-        compose = Compose([
-            # transforms.Scale(opt.img_size),
-            # transforms.ToTensor()
-        ])
-
-    return compose
-
-def img_transform(opt):
-    if opt.augmentation:
-        compose = Compose([
-            # transforms.Scale(opt.img_size),
-            transforms.CenterCrop(224),
-            #RandomHorizontalFlip(),
-            # transforms.ToTensor(),
-            """
-            # Normalize or Histogram Equalization? choose 1
-
-            transforms.Normalize([0.485, 0.456, 0.406],[0.229, 0.224, 0.225])
-            """
-        ])
-    else:
-        compose = Compose([
-            # transforms.Scale(opt.img_size),
-            # transforms.ToTensor()
-        ])
-        
-    return compose
-
+# 0-1 normalize and change dtype float64 -> float16
 def normalize(img):
-
     max = img.max()
     min = img.min()
-    img = (img-min)/(max-min)
+    if (max == min):
+        img = img - min
+    else:
+        img = (img - min) / (max - min)
     # print(img.dtype)
-
+    img = img.astype(np.float16)
+    # print(img.dtype)
     return img
+
+
+# def mask_transform(opt, mask):
+#     # h,w 중 작은 사이즈에 맞춰 crop 후 resize
+#     H, W = mask.shape
+
+#     if(H > W):
+#         diff = H-W
+#         crop_mask = mask[diff:H, 0:W]
+#     else:
+#         diff = W-H
+#         crop_mask = mask[0:H, diff:W]
+
+#     resize_mask = cv2.resize(crop_mask, (opt.img_size, opt.img_size), interpolation=cv2.INTER_CUBIC)
+
+#     return resize_mask
+
+def mask_transform(opt, mask):
+    H, W = mask.shape
+    diff_h = round((H - 2048) * 0.8)
+    diff_w = round((W - 2048) * 0.5)
+
+    crop_mask = mask[diff_h: diff_h + 2048, diff_w: diff_w + 2048]
+    resize_mask = cv2.resize(crop_mask, (opt.img_size, opt.img_size), interpolation=cv2.INTER_CUBIC)
+
+    return resize_mask
+
+
+def img_transform(opt, img):
+    H, W = img.shape
+    diff_h = round((H - 2048) * 0.8)
+    diff_w = round((W - 2048) * 0.5)
+
+    crop_img = img[diff_h: diff_h + 2048, diff_w: diff_w + 2048]
+    resize_img = cv2.resize(crop_img, (opt.img_size, opt.img_size), interpolation=cv2.INTER_CUBIC)
+
+    return resize_img
+
+
+# def img_transform(opt, img):
+#     # h,w 중 작은 사이즈에 맞춰 crop 후 resize
+#     H, W = img.shape
+
+#     if(H > W):
+#         diff = H-W
+#         crop_img = img[diff:H, 0:W]
+#     else:
+#         diff = W-H
+#         crop_img = img[0:H, diff:W]
+
+
+#     resize_img = cv2.resize(crop_img, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
+
+#     return resize_img
+
+
+'''
+if __name__ == "__main__":
+    opt= args
+
+    path = './data/test'
+    imgs = os.listdir(path)
+    img = os.path.join(path, imgs[0])
+    dcm = dicom2png(opt, img)
+    # dcm = cv2.normalize(dcm, dcm, 0, 1, cv2.NORM_MINMAX)
+    print(dcm.shape)
+    # h, w = dcm.shape
+    # dcm = dcm.reshape(h, w, 1)
+    # compose = transforms.Compose([transforms.ToTensor()])
+    # dcm = compose(dcm)
+    # dcm = np.array(dcm)
+    dcm = normalize(dcm)
+    dcm = dcm.astype(np.float32)
+    dcm_name = os.path.join(path, 'before_aug.tiff')
+    # cv2.imwrite(dcm_name, dcm)
+    imsave(dcm_name, dcm)
+    # dcm = dcm.reshape(h,w)
+    trans = img_transform(opt, dcm)
+    # trans = normalize(trans)
+    trans_name = os.path.join(path, 'after_aug.tiff')
+    imsave(trans_name, trans)
+'''
+
 
 class DatasetFromFolder(data.Dataset):
     def __init__(self, opt):
         super(DatasetFromFolder, self).__init__()
 
-        #ex) img_list = [1000000, 1000001,1000002,1000003,1000006,1000010,...]
-        #예진: mode 사용하여 img_list를 train과 test하는 경우로 분리
+        # ex) img_list = [1000000, 1000001,1000002,1000003,1000006,1000010,...]
+        # 예진: mode 사용하여 img_list를 train과 test하는 경우로 분리
         if opt.mode == 'train':
             self.img_list = os.listdir(opt.train_dir)
-        else: #test
-            #ex) img_list = [1000008.dcm, 10000010.dcm,...]
+        else:  # test
+            # ex) img_list = [1000008.dcm, 10000010.dcm,...]
             self.img_list = os.listdir(opt.test_dir)
 
         self.train_dir = opt.train_dir
         self.test_dir = opt.test_dir
         self.opt = opt
-        self.img_transform = img_transform(opt)
-        self.mask_transform = mask_transform(opt)
 
     def __getitem__(self, idx):
 
-        #예진: train/test 분리
+        masks = np.array([])
+        img_size = np.array([])
+
+        # 예진: train/test 분리
         if self.opt.mode == 'train':
             # ex) img_list_path = '/data/train/1000000'
-            # 채송: img_list ==> self.img_list로 메소드 정정
-            img_list_path = os.path.join(self.train_dir + '/' + self.img_list[idx])
+            img_list_path = os.path.join(self.train_dir, self.img_list[idx])
             # ex) img_files = ['100000.dcm','100000_AorticKnob.png','100000_Carina.png', ...] -> 1개의 dcm + 8개 mask
             img_files = os.listdir(img_list_path)
-            masks = np.array([])
-            
+
             for img in img_files:
-                # print('\n\n',img)
                 if '.dcm' in img:
-                    # input_img : 0-1 histogram equalization 한 후
-                    # input_img = dicom2png(os.path.join(img_list_path, img))
-                    input_img = dicom2png(os.path.join(img_list_path, img))
-                    c, H, W = input_img.shape #dicom2png에서 이미 1.h.w를 반환함
+
+                    input_img = dicom2png(self.opt, os.path.join(img_list_path, img))
+                    # print("img.shape before transform: ", input_img.shape) #(3001, 2983)
+
+                    H, W = input_img.shape
+                    # crop & resize
+                    input_img = img_transform(self.opt, input_img)
+
+                    # 0-1 normalize and change dtype float64 -> float16
                     input_img = normalize(input_img)
-                    # input_img = self.img_transform(input_img)
-                    #input_img=input_img.transpose((2, 0, 1)) # HWC to CHW
+                    # print("transform 후 최종: img.shape: ", input_img.shape) #(512, 512)
+                    input_img = input_img.reshape(1, self.opt.img_size, self.opt.img_size)
 
+                    img_size = np.append(img_size, (H, W))
 
-                # else:  # .png
-                # 채송: 확실하게 하기 위해 else 말고 elif .png 넣음
-                elif '.png' in img:
-                    # mask = cv2.imread(os.path.join(img_list_path, img))
-                    # 채송: mask image가 그레이 스케일이지만 채널이 8비트인 컬러 이미지이기 때문에 GRAYSCALE로 읽음
+                elif '.png' in img:  # .png
                     mask = cv2.imread(os.path.join(img_list_path, img), cv2.IMREAD_GRAYSCALE)
-                    #mask = mask.reshape(self.opt.num_class, H, W)
-                    #mask = mask.reshape(self.opt.num_class, H, W)
-                    mask = normalize(mask)
+                    # print('mask size : ', mask.shape) #(3001, 2983)
+
+                    # crop & resize
+                    mask = mask_transform(self.opt, mask)
+                    # print("transform 후 mask.shape: ", mask.shape) #(1006, 1000)
+
                     masks = np.append(masks, mask)
 
-            background = np.zeros((H,W))
+                else:  # .png
+                    print("[*]EXTENSION ERROR : extension is not (dcm, png)")
+                    pass
+
+            background = np.zeros((self.opt.img_size, self.opt.img_size))
+            # background  = 0th class
             masks = np.append(background, masks)
-            masks.reshape(self.opt.num_class + 1, H, W)
+            masks = masks.reshape(self.opt.num_class + 1, self.opt.img_size, self.opt.img_size)
 
-            masks = masks.argmax(axis = 0)
-            input_img = self.img_transform(input_img)
+            # 자연 : cross entropy loss 일때, target value : 0 <= target[] <= class-1
+            ## ce일때만
+            if not self.opt.loss == "dice":
+                masks = masks.argmax(axis=0)
 
-        
-        else: #test
+
+        else:  # test
             img_list_path = os.path.join(self.test_dir, self.img_list[idx])
-            if '.dcm' in img_list_path :
-                # input_img : 0-1 histogram equalization 한 후
-                # input_img = dicom2png(os.path.join(img_list_path, img))
-                input_img = dicom2png(img_list_path)
-                input_img = self.img_transform(input_img)
-                input_img = normalize(input_img)
-            masks = np.array([])
 
-        return input_img, masks, img_list_path
+            if '.dcm' in img_list_path:
+                input_img = dicom2png(self.opt, os.path.join(img_list_path))
+                H, W = input_img.shape
+                # crop & resize
+                input_img = img_transform(self.opt, input_img)
+                # 0-1 normalize and change dtype float64 -> float16
+                input_img = normalize(input_img)
+
+                input_img = input_img.reshape(1, self.opt.img_size, self.opt.img_size)
+
+                img_size = np.append(img_size, (H, W))
+
+        img_size = img_size.reshape((-1, 2))
+
+        return input_img, masks, img_list_path, img_size
 
     def __len__(self):
         return len(self.img_list)
 
 
 def get_data_loader(opt):
-    #train dataset만 오픈되어있지만 그래도 valid를 확인하고 싶으니깐 
-    #train dataset을 train : valid = 8:2 로 나누는 코드
+    # train dataset만 오픈되어있지만 그래도 valid를 확인하고 싶으니깐
+    # train dataset을 train : valid = 8:2 로 나누는 코드
 
     dataset = DatasetFromFolder(opt)
 
     train_len = int(opt.train_ratio * len(dataset))
     valid_len = int(len(dataset) - train_len)
 
-    train_dataset, valid_dataset = data.random_split(dataset, lengths = [train_len, valid_len])
+    train_dataset, valid_dataset = data.random_split(dataset, lengths=[train_len, valid_len])
 
-    train_data_loader = DataLoader(dataset = train_dataset, 
-                                    batch_size = opt.batch_size,
-                                    shuffle = True)
-    valid_data_loader = DataLoader(dataset = valid_dataset,
-                                    batch_size = opt.batch_size,
-                                    shuffle = False)
+    train_data_loader = DataLoader(dataset=train_dataset,
+                                   batch_size=opt.batch_size,
+                                   shuffle=True)
+    valid_data_loader = DataLoader(dataset=valid_dataset,
+                                   batch_size=opt.batch_size,
+                                   shuffle=False)
 
     return train_data_loader, valid_data_loader
 
 
-#자연: valid 생성 안할 때 train_data_loader
-#예진: test_data_loader로 사용
+# 자연: valid 생성 안할 때 train_data_loader
+# 예진: test_data_loader로 사용
 
 def get_test_data_loader(opt):
-    
     dataset = DatasetFromFolder(opt)
 
-    test_data_loader = DataLoader(dataset = dataset, 
-                                    batch_size = opt.batch_size,
-                                    shuffle = False)
+    test_data_loader = DataLoader(dataset=dataset,
+                                  batch_size=opt.batch_size,
+                                  shuffle=False)
 
     return test_data_loader
