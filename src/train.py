@@ -157,8 +157,16 @@ if __name__ == "__main__":
     train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = loss_criterion)
     valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = loss_criterion)
     
-    writer.add_scalar('Loss/train', train_loss, epoch)
-    writer.add_scalar('Loss/valid', valid_loss, epoch)
+    if opt.loss == 'dice':
+      writer.add_scalar('DICELoss/train', train_loss, epoch)
+      writer.add_scalar('DICELoss/valid', valid_loss, epoch)
+    elif opt.loss == 'wce':
+      writer.add_scalar('WCELoss/train', train_loss, epoch)
+      writer.add_scalar('WCELoss/valid', valid_loss, epoch)
+    else : 
+      writer.add_scalar('Loss/train', train_loss, epoch)
+      writer.add_scalar('Loss/valid', valid_loss, epoch)
+      
     schedular.step(train_loss)
     
     if not opt.save_best:
