@@ -1,3 +1,3 @@
 #! /bin/bash
 
-python ./inference.py
+python ./inference.py --mode test

@@ -10,12 +10,8 @@ from models import unet
 import torch.nn as nn
 import copy
 from utils.saver import save_checkpoint
-from tensorboardX import SummaryWriter
 import utils.matrics as MATRICS
 from torch.optim import lr_scheduler
-import numpy as np
-
-
 
 def set_loss(opt):
     if opt.loss == 'wce':
@@ -151,14 +147,12 @@ if __name__ == "__main__":
 
     best_loss = 1000.0
 
-    writer = SummaryWriter(log_dir=opt.log_dir)
     for epoch in range(opt.n_epochs):
         opt.epoch_num = epoch
         train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion=loss_criterion)
         valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion=loss_criterion)
 
-        writer.add_scalar('WCELoss/train', train_loss, epoch)
-        writer.add_scalar('WCELoss/valid', valid_loss, epoch)
+        print(train_loss, valid_loss)
 
         if not opt.save_best:
             save_checkpoint(opt, net, epoch, valid_loss, schedular)
@@ -172,4 +166,3 @@ if __name__ == "__main__":
     if opt.save_best:
         save_checkpoint(opt, best_model_wts, epoch, valid_loss, schedular)
 
-    writer.close()
