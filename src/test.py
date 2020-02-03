@@ -61,8 +61,7 @@ def trainer(opt, model, optimizer, data_loader, loss_criterion):
         total_loss += loss.item()
 
     total_loss = total_loss / i
-
-
+    
     print("***\nTraining %.2fs => Epoch[%d/%d] :: Loss : %.10f\n" % (
     time.time() - start_time, opt.epoch_num, opt.n_epochs, total_loss))
 
@@ -151,8 +150,10 @@ if __name__ == "__main__":
         opt.epoch_num = epoch
         train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion=loss_criterion)
         valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion=loss_criterion)
-
-        print(train_loss, valid_loss)
+        
+        schedular.step(train_loss[0], epoch)
+        
+        #print(train_loss, valid_loss)
 
         if not opt.save_best:
             save_checkpoint(opt, net, epoch, valid_loss, schedular)
