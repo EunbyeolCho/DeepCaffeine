@@ -1,7 +1,7 @@
 import torch
 import os
 
-def save_checkpoint(opt, net, epoch, loss, schedular):
+def save_checkpoint(opt, net, epoch, loss):
 
     checkpoint_dir = opt.weight_dir
     if not os.path.exists(checkpoint_dir):
@@ -14,5 +14,4 @@ def save_checkpoint(opt, net, epoch, loss, schedular):
         state = {'epoch' : epoch, 'net': net }
 
     torch.save(state, checkpoint_dir)
-    schedular.step(float(loss[0]))
     print("Checkpoint saved to {}".format(checkpoint_dir))
