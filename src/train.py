@@ -91,7 +91,9 @@ def evaluator(opt, model, data_loader, loss_criterion):
 
       if opt.loss == 'dice' :
         loss = loss_criterion.Get_total_DSC_loss(out, masks)
+        loss = loss.to('cuda')
       else :
+        loss_criterion = loss_criterion.to(opt.device)
         loss = loss_criterion(out, masks)
 
       total_loss +=loss.item()

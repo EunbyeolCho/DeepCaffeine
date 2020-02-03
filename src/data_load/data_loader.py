@@ -215,8 +215,8 @@ class DatasetFromFolder(data.Dataset):
                     masks = np.append(masks, mask)
         
                 else : #.png
-                    print("[*]EXTENSION ERROR : extension is not (dcm, png)")
-                    pass
+                    TypeError("[*]EXTENSION ERROR : extension is not (dcm, png)")
+                    
 
             background = np.zeros((self.opt.img_size,self.opt.img_size))
             #background  = 0th class
@@ -224,7 +224,6 @@ class DatasetFromFolder(data.Dataset):
             masks = masks.reshape(self.opt.num_class + 1, self.opt.img_size, self.opt.img_size )
             
             #자연 : cross entropy loss 일때, target value : 0 <= target[] <= class-1
-            ## ce일때만 
             if not self.opt.loss == "dice":
                 masks = masks.argmax(axis = 0)
             
