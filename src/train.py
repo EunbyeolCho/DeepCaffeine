@@ -147,7 +147,7 @@ if __name__ == "__main__":
   
   print('===> Setting Optimizer')
   optimizer = torch.optim.Adam(net.parameters(), lr = opt.lr, betas = (opt.b1, opt.b2))
-  #schedular = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=1, min_lr= 2e-5, verbose= True)
+  schedular = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=10, min_lr= e-5, verbose= True)
 
   best_loss = 1000.0
 
@@ -157,9 +157,10 @@ if __name__ == "__main__":
     train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = loss_criterion)
     valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = loss_criterion)
     
-    writer.add_scalar('DICELoss/train', train_loss, epoch)
-    writer.add_scalar('DICELoss/valid', valid_loss, epoch)
-
+    writer.add_scalar('Loss/train', train_loss, epoch)
+    writer.add_scalar('Loss/valid', valid_loss, epoch)
+    schedular.step(train_loss)
+    
     if not opt.save_best:
       save_checkpoint(opt, net, epoch, valid_loss)
 
