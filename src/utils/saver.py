@@ -1,7 +1,7 @@
 import torch
 import os
 
-def save_checkpoint(opt, net, epoch, loss):
+def save_checkpoint(opt, net, epoch, loss, schedular):
 
     checkpoint_dir = opt.weight_dir
     if not os.path.exists(checkpoint_dir):
@@ -9,9 +9,9 @@ def save_checkpoint(opt, net, epoch, loss):
     checkpoint_dir = os.path.join(checkpoint_dir,  "models_epoch_%04d_loss_%.10f.pth"%(epoch, loss))
 
     if torch.cuda.device_count() > 1 and opt.multi_gpu:
-        state = {'epoch': epoch, 'net': net.module }
+        state = {'epoch': epoch, 'net': net.module}
     else :
-        state = {'epoch' : epoch, 'net': net }
+        state = {'epoch' : epoch, 'net': net}
 
     torch.save(state, checkpoint_dir)
     print("Checkpoint saved to {}".format(checkpoint_dir))
