@@ -91,7 +91,9 @@ def evaluator(opt, model, data_loader, loss_criterion):
 
       if opt.loss == 'dice' :
         loss = loss_criterion.Get_total_DSC_loss(out, masks)
+        loss = loss.to('cuda')
       else :
+        loss_criterion = loss_criterion.to(opt.device)
         loss = loss_criterion(out, masks)
 
       total_loss +=loss.item()
@@ -153,8 +155,8 @@ if __name__ == "__main__":
     train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = loss_criterion)
     valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = loss_criterion)
 
-    writer.add_scalar('Loss/train', train_loss, epoch)
-    writer.add_scalar('Loss/valid', valid_loss, epoch)
+    writer.add_scalar('DLoss/train', train_loss, epoch)
+    writer.add_scalar('DLoss/valid', valid_loss, epoch)
 
     if not opt.save_best:
       save_checkpoint(opt, net, epoch, valid_loss)
