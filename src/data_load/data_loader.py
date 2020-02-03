@@ -215,7 +215,7 @@ class DatasetFromFolder(data.Dataset):
                     masks = np.append(masks, mask)
         
                 else : #.png
-                    TypeError("[*]EXTENSION ERROR : extension is not (dcm, png)")
+                    raise TypeError("[*]EXTENSION ERROR : extension is not (dcm, png)")
                     
 
             background = np.zeros((self.opt.img_size,self.opt.img_size))
