@@ -156,7 +156,7 @@ if __name__ == "__main__":
         #print(train_loss, valid_loss)
 
         if not opt.save_best:
-            save_checkpoint(opt, net, epoch, valid_loss, schedular)
+            save_checkpoint(opt, net, epoch, valid_loss)
 
             if opt.save_best:
                 if valid_loss < best_loss:
@@ -165,5 +165,5 @@ if __name__ == "__main__":
                     # 채송: main 함수 다 돌면 valid loss가 가장 좋은 model 저장하도록 하는
 
     if opt.save_best:
-        save_checkpoint(opt, best_model_wts, epoch, valid_loss, schedular)
+        save_checkpoint(opt, best_model_wts, epoch, valid_loss)
 
