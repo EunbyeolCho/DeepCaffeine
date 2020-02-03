@@ -47,3 +47,4 @@ TODO
 * 성능개선을 위한 Image Preprocessing
 * 속도개선 생각해보기
 * 짧은 시간이 남았지만 다른 모델 돌릴지 여부 검토
+* Learning rate Decay
