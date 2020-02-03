@@ -147,7 +147,7 @@ if __name__ == "__main__":
   
   print('===> Setting Optimizer')
   optimizer = torch.optim.Adam(net.parameters(), lr = opt.lr, betas = (opt.b1, opt.b2))
-  schedular = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=1, min_lr= 2e-5, verbose= True)
+  #schedular = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=1, min_lr= 2e-5, verbose= True)
 
   best_loss = 1000.0
 
@@ -156,12 +156,12 @@ if __name__ == "__main__":
     opt.epoch_num = epoch
     train_loss = trainer(opt, net, optimizer, train_data_loader, loss_criterion = loss_criterion)
     valid_loss = evaluator(opt, net, valid_data_loader, loss_criterion = loss_criterion)
-
+    
     writer.add_scalar('Loss/train', train_loss, epoch)
     writer.add_scalar('Loss/valid', valid_loss, epoch)
 
     if not opt.save_best:
-      save_checkpoint(opt, net, epoch, valid_loss, schedular)
+      save_checkpoint(opt, net, epoch, valid_loss)
 
       if opt.save_best :
         if valid_loss < best_loss : 
@@ -170,6 +170,6 @@ if __name__ == "__main__":
           #채송: main 함수 다 돌면 valid loss가 가장 좋은 model 저장하도록 하는 
 
   if opt.save_best:
-    save_checkpoint(opt, best_model_wts, epoch, valid_loss, schedular)
+    save_checkpoint(opt, best_model_wts, epoch, valid_loss)
 
 writer.close()
