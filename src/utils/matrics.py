@@ -29,8 +29,8 @@ class DCE_LOSS():
     def Get_DSC_loss(self, pred_m, gt_m):
         """Returns Dice Similarity Coefficient for ground truth and predicted masks."""
         
-        pred_m = pred_m.to(device = 'cpu', dtype=torch.float)
-        gt_m = gt_m.to(device = 'cpu',dtype = torch.float)
+        # pred_m = pred_m.to(device = 'cuda', dtype=torch.float)
+        # gt_m = gt_m.to(device = 'cuda',dtype = torch.float)
         pred_m_flat = pred_m.contiguous().view(-1)
         gt_m_flat = gt_m.contiguous().view(-1)
 
@@ -69,9 +69,14 @@ class DCE_LOSS():
 
         return 1- dsc 
 
+
     def Get_total_DSC_loss(self, out, gt):
         total_DSC_loss = 0
         count = 0
+
+        out = out.to(device = 'cuda', dtype=torch.float)
+        gt = gt.to(device = 'cuda',dtype = torch.float)
+
         for batch_num, masks in enumerate(gt):
             outs_per_batch = out[batch_num, :, :, :] # mask shape, out per batch shape (9,512,512)
             

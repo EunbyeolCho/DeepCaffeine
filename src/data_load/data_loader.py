@@ -39,8 +39,8 @@ def dicom2png(opt, dcm_pth):
 
         #float64  <-- uint16 :overflow 발생
         dc_arr = 255.0 * (dc_arr - MIN_BOUND) / (MAX_BOUND - MIN_BOUND)
-        dc_arr[dc_arr>255.0] = 255.0
-        dc_arr[dc_arr<0.0] = 0.0
+        dc_arr[dc_arr > 255.0] = 255.0
+        dc_arr[dc_arr < 0.0] = 0.0
         #cv2 clahe 사용하기 위해 uint8로 바꿈
         dc_arr = np.uint8(dc_arr)
 
@@ -89,13 +89,13 @@ def normalize(img):
 def mask_transform(opt, mask) :
     H, W = mask.shape
 
-    if (H<2048) or (W<2048):
+    if (H<1536) or (W<1536):
         resize_mask = cv2.resize(mask, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
     else : 
-        diff_h = round((H-2048)*0.8)
-        diff_w = round((W-2048)*0.5)
+        diff_h = round((H-1536)*0.8)
+        diff_w = round((W-1536)*0.5)
 
-        crop_mask = mask[diff_h : diff_h + 2048, diff_w : diff_w + 2048]
+        crop_mask = mask[diff_h : diff_h + 1536, diff_w : diff_w + 1536]
         resize_mask = cv2.resize(crop_mask, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
 
     return resize_mask
@@ -104,13 +104,13 @@ def mask_transform(opt, mask) :
 def img_transform(opt, img):
     H, W = img.shape
 
-    if (H<2048) or (W<2048):
+    if (H<1536) or (W<1536):
         resize_img = cv2.resize(img, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
     else : 
-        diff_h = round((H-2048) * 0.8)
-        diff_w = round((W-2048) * 0.5)
+        diff_h = round((H-1536) * 0.8)
+        diff_w = round((W-1536) * 0.5)
 
-        crop_img = img[diff_h : diff_h + 2048, diff_w : diff_w + 2048]
+        crop_img = img[diff_h : diff_h + 1536, diff_w : diff_w + 1536]
         resize_img = cv2.resize(crop_img, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
 
     return resize_img
@@ -186,7 +186,6 @@ class DatasetFromFolder(data.Dataset):
     def __getitem__(self, idx):
 
         masks = np.array([])
-        img_size = np.array([])
 
         #예진: train/test 분리
         if self.opt.mode == 'train':
@@ -202,6 +201,7 @@ class DatasetFromFolder(data.Dataset):
                     #print("img.shape before transform: ", input_img.shape) #(3001, 2983)
 
                     H, W = input_img.shape
+                    img_shape = np.array([H,W])
                     # crop & resize
                     input_img = img_transform(self.opt, input_img)
                     
@@ -209,8 +209,6 @@ class DatasetFromFolder(data.Dataset):
                     input_img = normalize(input_img)
                     #print("transform 후 최종: img.shape: ", input_img.shape) #(512, 512)
                     input_img = input_img.reshape(1, self.opt.img_size, self.opt.img_size)
-
-                    img_size = np.append(img_size, (H,W))
 
                 elif '.png' in img : #.png
                     mask = cv2.imread(os.path.join(img_list_path, img), cv2.IMREAD_GRAYSCALE)
@@ -242,6 +240,7 @@ class DatasetFromFolder(data.Dataset):
             if '.dcm' in img_list_path : 
                 input_img = dicom2png(self.opt, os.path.join(img_list_path))
                 H, W = input_img.shape
+                img_shape = np.array([H,W])
                 # crop & resize    
                 input_img = img_transform(self.opt, input_img)
                 #0-1 normalize and change dtype float64 -> float16
@@ -249,12 +248,8 @@ class DatasetFromFolder(data.Dataset):
 
                 input_img = input_img.reshape(1, self.opt.img_size, self.opt.img_size)
 
-                img_size = np.append(img_size, (H,W))
 
-        img_size = img_size.reshape((-1,2))
-
-
-        return input_img, masks, img_list_path, img_size
+        return input_img, masks, img_list_path, img_shape
 
     def __len__(self):
         return len(self.img_list)

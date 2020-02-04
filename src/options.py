@@ -48,7 +48,7 @@ parser.add_argument('--mode', type = str, default = 'train',
                     help = 'train, test')
 parser.add_argument('--model', type = str, default = 'unet',
                     help = 'unet, maskRcnn, deeplabv3p')
-parser.add_argument('--n_epochs', type = int, default = 50,
+parser.add_argument('--n_epochs', type = int, default = 130,
                     help = 'max epochs')
 parser.add_argument('--epoch_num', type = int, default = 0,
                     help = 'real time epoch')

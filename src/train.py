@@ -17,13 +17,13 @@ from torch.optim import lr_scheduler
 
 
 def set_loss(opt):
-  if opt.loss == 'wce':
+  if opt.loss == 'wce' :
     w = opt.loss_weight
     loss_weight = torch.FloatTensor([1, w , w, w, w, w, w, w, w])
     loss_criterion = nn.CrossEntropyLoss(weight = loss_weight)
-  elif opt.loss =='dice':
+  elif opt.loss =='dice' :
     loss_criterion = MATRICS.DCE_LOSS()
-  elif opt.loss == 'ce':
+  elif opt.loss == 'ce' :
     loss_criterion = nn.CrossEntropyLoss()
   else : 
     raise ValueError('set the loss function (wce, ce, dice)')
@@ -53,7 +53,6 @@ def trainer(opt, model, optimizer, data_loader, loss_criterion):
       loss = loss_criterion.Get_total_DSC_loss(out, masks)
       # loss = torch.from_numpy(np.asarray(loss)).float().to('cuda')
       loss = loss.to('cuda')
-      # loss.requires_grad = True
     else :
       loss_criterion = loss_criterion.to(opt.device)
       loss = loss_criterion(out, masks)

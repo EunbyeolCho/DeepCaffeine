@@ -56,7 +56,7 @@ def inference(opt):
     
     for i, batch in enumerate(test_data_loader) :
       
-      img, masks, filepath, img_size = batch[0], batch[1], batch[2], batch[3]
+      img, masks, filepath, img_shape = batch[0], batch[1], batch[2], batch[3]
 
       if opt.use_cuda :
         img = img.to(opt.device, dtype = torch.float)
@@ -74,7 +74,7 @@ def inference(opt):
         #결과를 /data/ouput에 저장
         case_id = os.path.basename(filepath[b])[:-4]
         batch_img = out[b, :, :, :]
-        resize_img = resize_output(opt, batch_img, img_size[b])
+        resize_img = resize_output(opt, batch_img, img_shape[b])
         batch_mask = one_hot(resize_img)
         # print(case_id)
 
