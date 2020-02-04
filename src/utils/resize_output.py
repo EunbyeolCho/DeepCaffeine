@@ -19,6 +19,8 @@ def resize_output(opt, output, img_size):
         diff_h = int(round((H-1536)*0.8))
         diff_w = int(round((W-1536)*0.5))
         print('RESIZING...diff_h : {}, diff_w : {}, input_img_shape : ({},{}), output_shape : {}\n'.format(diff_h, diff_w, H, W, output.shape))
+        # print(type(diff_h))
+        # print(output.shape)
         for i in range(c):
             new_output[i, diff_h:diff_h+1536, diff_w:diff_w+1536] = cv2.resize(output[i, :, :], (1536,1536), interpolation = cv2.INTER_CUBIC)
 

@@ -149,7 +149,8 @@ if __name__ == "__main__":
   schedular = lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=10, min_lr= 1e-5, verbose= True)
 
   best_loss = 1000.0
-
+  old_train_loss = 1.0
+  count = 0
   writer = SummaryWriter(log_dir = opt.log_dir)
   for epoch in range(opt.n_epochs):
     opt.epoch_num = epoch
@@ -167,6 +168,7 @@ if __name__ == "__main__":
       writer.add_scalar('Loss/valid', valid_loss, epoch)
 
     schedular.step(train_loss)
+    delta = abs(old_train_loss - train_loss)
     
     if not opt.save_best:
       save_checkpoint(opt, net, epoch, valid_loss)
@@ -176,7 +178,15 @@ if __name__ == "__main__":
           best_loss = valid_loss
           best_model_wts = copy.deepcopy(net.state_dict())
           #채송: main 함수 다 돌면 valid loss가 가장 좋은 model 저장하도록 하는 
-
+    old_train_loss = train_loss
+    if delta < old_train_loss//10:
+      count+=1
+    else:
+      count = 0
+      
+    if count > 9:
+      break
+      
   if opt.save_best:
     save_checkpoint(opt, best_model_wts, epoch, valid_loss)
 
