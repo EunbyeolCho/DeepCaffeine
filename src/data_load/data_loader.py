@@ -89,13 +89,13 @@ def normalize(img):
 def mask_transform(opt, mask) :
     H, W = mask.shape
 
-    if (H<2048) or (W<2048):
+    if (H<1536) or (W<1536):
         resize_mask = cv2.resize(mask, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
     else : 
-        diff_h = round((H-2048)*0.8)
-        diff_w = round((W-2048)*0.5)
+        diff_h = round((H-1536)*0.8)
+        diff_w = round((W-1536)*0.5)
 
-        crop_mask = mask[diff_h : diff_h + 2048, diff_w : diff_w + 2048]
+        crop_mask = mask[diff_h : diff_h + 1536, diff_w : diff_w + 1536]
         resize_mask = cv2.resize(crop_mask, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
 
     return resize_mask
@@ -104,13 +104,13 @@ def mask_transform(opt, mask) :
 def img_transform(opt, img):
     H, W = img.shape
 
-    if (H<2048) or (W<2048):
+    if (H<1536) or (W<1536):
         resize_img = cv2.resize(img, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
     else : 
-        diff_h = round((H-2048) * 0.8)
-        diff_w = round((W-2048) * 0.5)
+        diff_h = round((H-1536) * 0.8)
+        diff_w = round((W-1536) * 0.5)
 
-        crop_img = img[diff_h : diff_h + 2048, diff_w : diff_w + 2048]
+        crop_img = img[diff_h : diff_h + 1536, diff_w : diff_w + 1536]
         resize_img = cv2.resize(crop_img, (opt.img_size, opt.img_size), interpolation = cv2.INTER_CUBIC)
 
     return resize_img
